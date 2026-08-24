@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 
+const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
+
 const DEFAULT_EMISOR = {
   nombre: '',
   rut: '',
@@ -195,7 +197,11 @@ function App() {
     }
 
     try {
-      const response = await fetch('/api/generar-factura', {
+      if (!API_URL) {
+        throw new Error('Falta configurar la variable de entorno VITE_API_URL.')
+      }
+
+      const response = await fetch(`${API_URL}/api/generar-factura`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
