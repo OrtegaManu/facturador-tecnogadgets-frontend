@@ -286,7 +286,7 @@ function App() {
       </header>
 
       {/* Main Container - 2 Columns (65% / 35%) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="inicio" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Notifications */}
         {errorMsg && (
@@ -322,7 +322,7 @@ function App() {
           </div>
         )}
 
-        <form onSubmit={handleGeneratePdf} className="flex flex-col lg:flex-row gap-8">
+        <form id="generador" onSubmit={handleGeneratePdf} className="flex flex-col lg:flex-row gap-8">
 
           {/* LEFT COLUMN (65%) */}
           <div className="w-full lg:w-[65%] space-y-8">
@@ -330,9 +330,9 @@ function App() {
             {/* Header Banner info */}
             <div className="bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 relative overflow-hidden">
               <div className="relative z-10 space-y-1">
-                <h1 className="text-xl font-bold text-white">Generador Profesional de Facturas</h1>
+                <h1 className="text-xl font-bold text-white">Generador de Facturas Online para Uruguay</h1>
                 <p className="text-xs text-slate-300 max-w-xl">
-                  Completa los datos de emisor, cliente e ítems para generar un comprobante oficial en formato PDF.
+                  Completa los datos de emisor, cliente e ítems para crear facturas en PDF y generar un comprobante profesional al instante.
                 </p>
               </div>
             </div>
@@ -817,11 +817,27 @@ function App() {
           <span className="text-[10px] text-slate-600">728 x 90 Leaderboard / Responsive Slot</span>
         </section>
 
+        <section id="ayuda" className="mt-12 max-w-3xl mx-auto text-center space-y-3">
+          <h2 className="text-lg font-bold text-slate-200">Facturación online simple para emprendedores de Uruguay</h2>
+          <p className="text-sm leading-6 text-slate-400">
+            FacturasOnlineUY te permite crear facturas en PDF, organizar los datos de tus clientes y descargar tus comprobantes de forma rápida y profesional.
+            Completa el formulario con la información de tu negocio y genera un documento listo para compartir con tus clientes.
+          </p>
+          <p className="text-sm leading-6 text-slate-400">
+            Nuestra herramienta está pensada para emprendedores de Uruguay, profesionales independientes y pequeñas empresas que necesitan gestionar su facturación online sin complicaciones.
+          </p>
+        </section>
+
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <p>© 2026 FacturaExpress. SPA React + Tailwind CSS Facturador.</p>
+        <nav aria-label="Navegación interna" className="mb-3 flex justify-center gap-4">
+          <a href="#inicio" className="hover:text-indigo-400 transition">Inicio</a>
+          <a href="#generador" className="hover:text-indigo-400 transition">Generador</a>
+          <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda</a>
+        </nav>
+        <p>© 2026 FacturasOnlineUY. Generador de facturas online para Uruguay.</p>
       </footer>
     </div>
   )
