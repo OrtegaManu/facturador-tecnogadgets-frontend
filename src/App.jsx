@@ -330,9 +330,9 @@ function App() {
             {/* Header Banner info */}
             <div className="bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 relative overflow-hidden">
               <div className="relative z-10 space-y-1">
-                <h1 className="text-xl font-bold text-white">Generador de Facturas Online para Uruguay</h1>
+                <h1 className="text-xl font-bold text-white">Generador de Facturas Online en Uruguay</h1>
                 <p className="text-xs text-slate-300 max-w-xl">
-                  Completa los datos de emisor, cliente e ítems para crear facturas en PDF y generar un comprobante profesional al instante.
+                  Este generador de facturas te permite crear facturas en PDF y gestionar tus comprobantes de forma profesional y rápida en Uruguay.
                 </p>
               </div>
             </div>
@@ -835,7 +835,7 @@ function App() {
         <nav aria-label="Navegación interna" className="mb-3 flex justify-center gap-4">
           <a href="#inicio" className="hover:text-indigo-400 transition">Inicio</a>
           <a href="#generador" className="hover:text-indigo-400 transition">Generador</a>
-          <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda</a>
+          <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda / FAQ</a>
         </nav>
         <p>© 2026 FacturasOnlineUY. Generador de facturas online para Uruguay.</p>
       </footer>
