@@ -708,6 +708,24 @@ function App() {
               </button>
             </div>
 
+            <section aria-labelledby="beneficios-title" className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+              <h2 id="beneficios-title" className="text-base font-semibold text-slate-200 mb-4">Beneficios de facturar online</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <article>
+                  <h3 className="font-semibold text-indigo-300 mb-1">Rápido y sencillo</h3>
+                  <p className="text-slate-400 leading-5">Completa tus datos y genera un comprobante profesional en pocos pasos.</p>
+                </article>
+                <article>
+                  <h3 className="font-semibold text-purple-300 mb-1">PDF al instante</h3>
+                  <p className="text-slate-400 leading-5">Descarga tu factura en PDF para compartirla con tus clientes.</p>
+                </article>
+                <article>
+                  <h3 className="font-semibold text-emerald-300 mb-1">Pensado para Uruguay</h3>
+                  <p className="text-slate-400 leading-5">Una herramienta práctica para freelancers, emprendedores y empresas.</p>
+                </article>
+              </div>
+            </section>
+
           </div>
 
           {/* RIGHT COLUMN (35% Sticky Sidebar) */}
