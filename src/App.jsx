@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
+const COMMENTS_URL = API_URL ? `${API_URL}/api/comentarios` : null
 
 const DEFAULT_EMISOR = {
   nombre: '',
@@ -29,6 +30,125 @@ const INITIAL_ITEMS = [
 ]
 
 const roundMoney = (value) => Math.round((value + Number.EPSILON) * 100) / 100
+
+function Opiniones() {
+  const [comentarios, setComentarios] = useState([])
+  const [texto, setTexto] = useState('')
+  const [cargando, setCargando] = useState(true)
+  const [enviando, setEnviando] = useState(false)
+  const [mensaje, setMensaje] = useState(null)
+
+  useEffect(() => {
+    const cargarComentarios = async () => {
+      if (!COMMENTS_URL) {
+        setCargando(false)
+        return
+      }
+
+      try {
+        const response = await fetch(COMMENTS_URL)
+        if (!response.ok) {
+          throw new Error('No se pudieron cargar las opiniones.')
+        }
+        setComentarios(await response.json())
+      } catch (error) {
+        console.error('Error al cargar opiniones:', error)
+        setMensaje('No se pudieron cargar las opiniones en este momento.')
+      } finally {
+        setCargando(false)
+      }
+    }
+
+    cargarComentarios()
+  }, [])
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    const comentario = texto.trim()
+
+    if (!comentario || comentario.length > 600 || !COMMENTS_URL) {
+      return
+    }
+
+    setEnviando(true)
+    setMensaje(null)
+
+    try {
+      const response = await fetch(COMMENTS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ texto: comentario })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '')
+        throw new Error(errorText || 'No se pudo enviar la opinión.')
+      }
+
+      const comentarioGuardado = await response.json()
+      setComentarios((prev) => [comentarioGuardado, ...prev].slice(0, 5))
+      setTexto('')
+      setMensaje('¡Gracias por compartir tu opinión!')
+    } catch (error) {
+      console.error('Error al enviar opinión:', error)
+      setMensaje(error.message || 'No se pudo enviar la opinión.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <section id="opiniones" aria-labelledby="opiniones-title" className="mt-12 max-w-4xl mx-auto space-y-5">
+      <div className="text-center space-y-2">
+        <h2 id="opiniones-title" className="text-lg font-bold text-slate-200">Opiniones</h2>
+        <p className="text-sm text-slate-400">Comparte tu experiencia de forma anónima y ayuda a mejorar FacturasOnlineUY.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
+        <label htmlFor="opinion-texto" className="sr-only">Escribe tu opinión</label>
+        <textarea
+          id="opinion-texto"
+          value={texto}
+          onChange={(event) => setTexto(event.target.value)}
+          maxLength={600}
+          rows="4"
+          placeholder="¿Qué te pareció la herramienta?"
+          className="w-full resize-none bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+        />
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-slate-500">{texto.length}/600 caracteres</span>
+          <button
+            type="submit"
+            disabled={enviando || !texto.trim() || !COMMENTS_URL}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {enviando ? 'Enviando...' : 'Enviar opinión'}
+          </button>
+        </div>
+        {mensaje && <p aria-live="polite" className="text-xs text-slate-400">{mensaje}</p>}
+      </form>
+
+      {cargando ? (
+        <p className="text-center text-xs text-slate-500">Cargando opiniones...</p>
+      ) : comentarios.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {comentarios.map((comentario) => (
+            <article key={comentario.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2">
+              <p className="text-sm leading-6 text-slate-300">{comentario.texto}</p>
+              <time dateTime={comentario.fecha} className="block text-[11px] text-slate-600">
+                {new Date(comentario.fecha).toLocaleDateString('es-UY')}
+              </time>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-xs text-slate-500">Todavía no hay opiniones. ¡Sé la primera persona en compartir la tuya!</p>
+      )}
+    </section>
+  )
+}
 
 function App() {
   // States
@@ -845,6 +965,8 @@ function App() {
             Nuestra herramienta está pensada para emprendedores de Uruguay, profesionales independientes y pequeñas empresas que necesitan gestionar su facturación online sin complicaciones.
           </p>
         </section>
+
+        <Opiniones />
 
       </main>
 
