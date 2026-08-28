@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/generador-de-facturas",
+      "destination": "/generador-de-facturas/index.html"
+    },
+    {
+      "source": "/generador-de-proformas",
+      "destination": "/generador-de-proformas/index.html"
+    }
+  ]
+}

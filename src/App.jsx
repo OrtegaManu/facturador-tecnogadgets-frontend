@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { getSeoPage } from './seoPages.js'
 
 const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
@@ -198,16 +198,25 @@ function App() {
   const [errorMsg, setErrorMsg] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
   const [termsOpen, setTermsOpen] = useState(false)
+  const previousFocusRef = useRef(null)
+  const closeTermsButtonRef = useRef(null)
 
   useEffect(() => {
     if (!termsOpen) return undefined
+
+    previousFocusRef.current = document.activeElement
+    closeTermsButtonRef.current?.focus()
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') setTermsOpen(false)
     }
 
     document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      previousFocusRef.current?.focus?.()
+      previousFocusRef.current = null
+    }
   }, [termsOpen])
 
   // Emisor Handlers
@@ -1025,12 +1034,14 @@ function App() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="terms-title"
+            aria-describedby="terms-description"
             className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-left shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
               <h2 id="terms-title" className="text-lg font-bold text-slate-100">Términos y Condiciones</h2>
               <button
                 type="button"
+                ref={closeTermsButtonRef}
                 onClick={() => setTermsOpen(false)}
                 aria-label="Cerrar términos y condiciones"
                 className="text-xl leading-none text-slate-500 hover:text-slate-200 transition"
@@ -1038,7 +1049,7 @@ function App() {
                 ×
               </button>
             </div>
-            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+            <div id="terms-description" className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
               <p>FacturasOnlineUY es un generador de diseño en PDF. No emite comprobantes fiscales oficiales avalados por la DGI.</p>
               <p>El usuario asume la responsabilidad total sobre el uso legal y ético de los documentos generados.</p>
               <p>La administración se reserva el derecho de eliminar opiniones anónimas que contengan spam o falten al respeto.</p>

@@ -24,7 +24,7 @@ export const SEO_PAGES = {
   '/generador-de-facturas': {
     path: '/generador-de-facturas',
     title: 'Generador de Facturas Online | Crear factura PDF gratis',
-    description: 'Creá una factura online y descargala en PDF gratis, sin registro. Completá emisor, cliente, productos, IVA y descuentos en pocos pasos.',
+    description: 'Creá una factura online y descargala en PDF gratis, sin registro. Completá emisor, cliente, productos, IVA y descuentos en pocos pasos para Uruguay.',
     h1: 'Generador de facturas online',
     intro: 'Usá este generador de facturas para preparar un documento en PDF con tus datos, los de tu cliente, productos, descuentos e IVA. Es una opción simple para crear una factura online sin perder tiempo.',
     documentType: 'FACTURA',
@@ -43,7 +43,7 @@ export const SEO_PAGES = {
   },
   '/generador-de-proformas': {
     path: '/generador-de-proformas',
-    title: 'Generador de Proformas Online Uruguay | Crear proforma PDF gratis',
+    title: 'Generador de Proformas Online Uruguay | Gratis y PDF',
     description: 'Creá una proforma o presupuesto online y descargalo en PDF gratis, sin registro. Presentá productos, servicios, precios e impuestos con claridad.',
     h1: 'Generador de proformas online',
     intro: 'Prepará una proforma PDF para presentar una cotización de productos o servicios antes de concretar una venta. El mismo formulario te permite ordenar precios, impuestos y condiciones comerciales en minutos.',
