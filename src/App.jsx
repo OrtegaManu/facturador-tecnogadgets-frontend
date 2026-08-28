@@ -168,6 +168,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
+  const [termsOpen, setTermsOpen] = useState(false)
 
   // Emisor Handlers
   const handleEmisorChange = (e) => {
@@ -977,8 +978,49 @@ function App() {
           <a href="#generador" className="hover:text-indigo-400 transition">Generador</a>
           <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda / FAQ</a>
         </nav>
+        <button
+          type="button"
+          onClick={() => setTermsOpen(true)}
+          className="text-slate-600 hover:text-indigo-400 transition underline underline-offset-2"
+        >
+          Términos y Condiciones
+        </button>
         <p>© 2026 FacturasOnlineUY. Generador de facturas online para Uruguay.</p>
       </footer>
+
+      {termsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setTermsOpen(false)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="terms-title"
+            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-left shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+              <h2 id="terms-title" className="text-lg font-bold text-slate-100">Términos y Condiciones</h2>
+              <button
+                type="button"
+                onClick={() => setTermsOpen(false)}
+                aria-label="Cerrar términos y condiciones"
+                className="text-xl leading-none text-slate-500 hover:text-slate-200 transition"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+              <p>FacturasOnlineUY es un generador de diseño en PDF. No emite comprobantes fiscales oficiales avalados por la DGI.</p>
+              <p>El usuario asume la responsabilidad total sobre el uso legal y ético de los documentos generados.</p>
+              <p>La administración se reserva el derecho de eliminar opiniones anónimas que contengan spam o falten al respeto.</p>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }
