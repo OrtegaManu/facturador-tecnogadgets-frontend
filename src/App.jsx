@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { getSeoPage } from './seoPages.js'
 
 const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
 const COMMENTS_URL = API_URL ? `${API_URL}/api/comentarios` : null
@@ -100,7 +101,7 @@ function Opiniones() {
   }
 
   return (
-    <section id="opiniones" aria-labelledby="opiniones-title" className="mt-12 max-w-4xl mx-auto space-y-5">
+    <section id="opiniones" aria-labelledby="opiniones-title" className="mt-12 max-w-4xl mx-auto min-h-[220px] space-y-5">
       <div className="text-center space-y-2">
         <h2 id="opiniones-title" className="text-lg font-bold text-slate-200">Opiniones</h2>
         <p className="text-sm text-slate-400">Comparte tu experiencia de forma anónima y ayuda a mejorar FacturasOnlineUY.</p>
@@ -150,14 +151,42 @@ function Opiniones() {
   )
 }
 
+function SeoContent({ page }) {
+  return (
+    <div id="ayuda" className="mt-12 max-w-3xl mx-auto space-y-8">
+      <section aria-labelledby="how-heading" className="space-y-3">
+        <h2 id="how-heading" className="text-lg font-bold text-slate-200">Cómo funciona</h2>
+        <ol className="space-y-2 text-sm leading-6 text-slate-400 list-decimal list-inside">
+          {page.howItWorks.map((step) => <li key={step}>{step}</li>)}
+        </ol>
+      </section>
+
+      <section aria-labelledby="faq-heading" className="space-y-3">
+        <h2 id="faq-heading" className="text-lg font-bold text-slate-200">Preguntas frecuentes</h2>
+        <div className="space-y-2">
+          {page.faq.map(([question, answer]) => (
+            <details key={question} className="rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm">
+              <summary className="cursor-pointer font-medium text-slate-200">{question}</summary>
+              <p className="mt-2 leading-6 text-slate-400">{answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function App() {
+  const currentPage = getSeoPage(typeof window === 'undefined' ? '/' : window.location.pathname)
+  const documentLabel = currentPage.documentLabel
   // States
   const [emisor, setEmisor] = useState(DEFAULT_EMISOR)
   const [cliente, setCliente] = useState(DEFAULT_CLIENTE)
   const [configFactura, setConfigFactura] = useState({
-    numero: 'F001',
+    numero: currentPage.documentType === 'PROFORMA' ? 'P001' : 'F001',
     fecha: new Date().toISOString().split('T')[0],
-    moneda: 'USD'
+    moneda: 'USD',
+    tipoDocumento: currentPage.documentType
   })
   const [descuentoGlobal, setDescuentoGlobal] = useState(0)
   const [items, setItems] = useState(INITIAL_ITEMS)
@@ -169,6 +198,17 @@ function App() {
   const [errorMsg, setErrorMsg] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
   const [termsOpen, setTermsOpen] = useState(false)
+
+  useEffect(() => {
+    if (!termsOpen) return undefined
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setTermsOpen(false)
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [termsOpen])
 
   // Emisor Handlers
   const handleEmisorChange = (e) => {
@@ -297,6 +337,7 @@ function App() {
         numeroFactura: configFactura.numero,
         fechaEmision: configFactura.fecha,
         moneda: configFactura.moneda,
+        tipoDocumento: configFactura.tipoDocumento,
         descuentoGlobalPorcentaje: Number(descuentoGlobal) || 0,
         subtotal: totals.subtotalFinal,
         descuentoTotal: totals.totalDescuentoLineas + totals.montoDescuentoGlobal,
@@ -367,7 +408,7 @@ function App() {
             </div>
             <div>
               <span className="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                FacturaExpress
+                FacturasOnlineUY
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 PRO
@@ -378,7 +419,7 @@ function App() {
           <div className="flex items-center space-x-4">
             <span className="text-xs text-slate-400 hidden md:flex items-center space-x-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Backend Status: Online</span>
+              <span>Generador gratuito y sin registro</span>
             </span>
             <button
               onClick={handleGeneratePdf}
@@ -411,7 +452,7 @@ function App() {
 
         {/* Notifications */}
         {errorMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm flex items-start space-x-3">
+          <div role="alert" className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm flex items-start space-x-3">
             <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -419,7 +460,7 @@ function App() {
               <span className="font-semibold block">Error al procesar factura</span>
               <span>{errorMsg}</span>
             </div>
-            <button onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-200">
+            <button type="button" aria-label="Cerrar mensaje de error" onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-200">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -428,14 +469,14 @@ function App() {
         )}
 
         {successMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center justify-between">
+          <div role="status" className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <span>{successMsg}</span>
             </div>
-            <button onClick={() => setSuccessMsg(null)} className="text-emerald-400 hover:text-emerald-200">
+            <button type="button" aria-label="Cerrar mensaje de éxito" onClick={() => setSuccessMsg(null)} className="text-emerald-400 hover:text-emerald-200">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -449,14 +490,14 @@ function App() {
           <div className="w-full lg:w-[65%] space-y-8">
 
             {/* Header Banner info */}
-            <div className="bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 relative overflow-hidden">
+            <section aria-labelledby="generator-heading" className="bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 relative overflow-hidden">
               <div className="relative z-10 space-y-1">
-                <h1 className="text-xl font-bold text-white">Generador de Facturas Online en Uruguay</h1>
+                <h1 id="generator-heading" className="text-xl font-bold text-white">{currentPage.h1}</h1>
                 <p className="text-xs text-slate-300 max-w-xl">
-                  El creador y generador de facturas online más ágil para Uruguay: crea y descarga tus comprobantes en PDF de forma profesional y rápida.
+                  {currentPage.intro}
                 </p>
               </div>
-            </div>
+            </section>
 
             {/* SECCIÓN 1: Datos del Emisor */}
             <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
@@ -471,8 +512,9 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
+                  <label htmlFor="emisor-nombre" className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
                   <input
+                    id="emisor-nombre"
                     type="text"
                     name="nombre"
                     value={emisor.nombre}
@@ -483,8 +525,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">RUT</label>
+                  <label htmlFor="emisor-rut" className="block text-slate-400 mb-1 font-medium">RUT</label>
                   <input
+                    id="emisor-rut"
                     type="text"
                     name="rut"
                     value={emisor.rut}
@@ -495,8 +538,9 @@ function App() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-slate-400 mb-1 font-medium">Dirección</label>
+                  <label htmlFor="emisor-direccion" className="block text-slate-400 mb-1 font-medium">Dirección</label>
                   <input
+                    id="emisor-direccion"
                     type="text"
                     name="direccion"
                     value={emisor.direccion}
@@ -506,8 +550,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Teléfono</label>
+                  <label htmlFor="emisor-telefono" className="block text-slate-400 mb-1 font-medium">Teléfono</label>
                   <input
+                    id="emisor-telefono"
                     type="text"
                     name="telefono"
                     value={emisor.telefono}
@@ -517,8 +562,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Email</label>
+                  <label htmlFor="emisor-email" className="block text-slate-400 mb-1 font-medium">Email</label>
                   <input
+                    id="emisor-email"
                     type="email"
                     name="email"
                     value={emisor.email}
@@ -542,8 +588,9 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
+                  <label htmlFor="cliente-nombre" className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
                   <input
+                    id="cliente-nombre"
                     type="text"
                     name="nombre"
                     value={cliente.nombre}
@@ -555,8 +602,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Documento (RUT / CI)</label>
+                  <label htmlFor="cliente-documento" className="block text-slate-400 mb-1 font-medium">Documento (RUT / CI)</label>
                   <input
+                    id="cliente-documento"
                     type="text"
                     name="documento"
                     value={cliente.documento}
@@ -568,8 +616,9 @@ function App() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-slate-400 mb-1 font-medium">Dirección</label>
+                  <label htmlFor="cliente-direccion" className="block text-slate-400 mb-1 font-medium">Dirección</label>
                   <input
+                    id="cliente-direccion"
                     type="text"
                     name="direccion"
                     value={cliente.direccion}
@@ -590,13 +639,14 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h2 className="text-base font-semibold text-slate-200">Configuración de Comprobante</h2>
+                <h2 className="text-base font-semibold text-slate-200">Configuración de {documentLabel}</h2>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Número Factura</label>
+                  <label htmlFor="documento-numero" className="block text-slate-400 mb-1 font-medium">Número de {documentLabel}</label>
                   <input
+                    id="documento-numero"
                     type="text"
                     name="numero"
                     value={configFactura.numero}
@@ -607,8 +657,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Fecha Emisión</label>
+                  <label htmlFor="documento-fecha" className="block text-slate-400 mb-1 font-medium">Fecha Emisión</label>
                   <input
+                    id="documento-fecha"
                     type="date"
                     name="fecha"
                     value={configFactura.fecha}
@@ -619,8 +670,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Moneda</label>
+                  <label htmlFor="documento-moneda" className="block text-slate-400 mb-1 font-medium">Moneda</label>
                   <select
+                    id="documento-moneda"
                     name="moneda"
                     value={configFactura.moneda}
                     onChange={handleConfigChange}
@@ -632,8 +684,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Desc. Global (%)</label>
+                  <label htmlFor="descuento-global" className="block text-slate-400 mb-1 font-medium">Desc. Global (%)</label>
                   <input
+                    id="descuento-global"
                     type="number"
                     min="0"
                     max="100"
@@ -684,7 +737,9 @@ function App() {
                           #{idx + 1}
                         </span>
                         <div className="flex-1">
+                          <label htmlFor={`item-${item.id}-descripcion`} className="sr-only">Descripción del ítem {idx + 1}</label>
                           <input
+                            id={`item-${item.id}-descripcion`}
                             type="text"
                             placeholder="Descripción del producto o servicio"
                             value={item.descripcion}
@@ -707,8 +762,9 @@ function App() {
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
                         <div>
-                          <label className="block text-slate-400 mb-1">Cantidad</label>
+                          <label htmlFor={`item-${item.id}-cantidad`} className="block text-slate-400 mb-1">Cantidad</label>
                           <input
+                            id={`item-${item.id}-cantidad`}
                             type="number"
                             min="1"
                             value={item.cantidad}
@@ -718,8 +774,9 @@ function App() {
                         </div>
 
                         <div>
-                          <label className="block text-slate-400 mb-1">Precio Unit. ({symbol})</label>
+                          <label htmlFor={`item-${item.id}-precio`} className="block text-slate-400 mb-1">Precio Unit. ({symbol})</label>
                           <input
+                            id={`item-${item.id}-precio`}
                             type="number"
                             min="0"
                             step="0.01"
@@ -730,8 +787,9 @@ function App() {
                         </div>
 
                         <div>
-                          <label className="block text-slate-400 mb-1">Desc. (%)</label>
+                          <label htmlFor={`item-${item.id}-descuento`} className="block text-slate-400 mb-1">Desc. (%)</label>
                           <input
+                            id={`item-${item.id}-descuento`}
                             type="number"
                             min="0"
                             max="100"
@@ -780,8 +838,9 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Condiciones Comerciales</label>
+                  <label htmlFor="condiciones-comerciales" className="block text-slate-400 mb-1 font-medium">Condiciones Comerciales</label>
                   <textarea
+                    id="condiciones-comerciales"
                     rows="3"
                     value={condicionesComerciales}
                     onChange={(e) => setCondicionesComerciales(e.target.value)}
@@ -791,8 +850,9 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Datos de Transferencia Bancaria</label>
+                  <label htmlFor="datos-transferencia" className="block text-slate-400 mb-1 font-medium">Datos de Transferencia Bancaria</label>
                   <textarea
+                    id="datos-transferencia"
                     rows="3"
                     value={datosTransferencia}
                     onChange={(e) => setDatosTransferencia(e.target.value)}
@@ -852,20 +912,6 @@ function App() {
           {/* RIGHT COLUMN (35% Sticky Sidebar) */}
           <div className="w-full lg:w-[35%] space-y-6">
             <div className="sticky top-24 space-y-6">
-
-              {/* Monetization Slot 1: Vertical AdSense Banner Placeholder */}
-              <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-6 min-h-[300px] flex flex-col items-center justify-center text-center space-y-2">
-                <div className="p-3 rounded-full bg-slate-800/60 text-slate-500">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                  </svg>
-                </div>
-                <span className="text-xs font-mono font-medium text-slate-400">
-                  [Espacio AdSense - Banner Vertical]
-                </span>
-                <span className="text-[10px] text-slate-600">300 x 600 Responsive Slot</span>
-              </div>
 
               {/* Real-time Summary Card */}
               <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 backdrop-blur-sm">
@@ -932,7 +978,7 @@ function App() {
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                      <span>Descargar Comprobante PDF</span>
+                    <span>Descargar {documentLabel} PDF</span>
                     </>
                   )}
                 </button>
@@ -943,29 +989,7 @@ function App() {
 
         </form>
 
-        {/* Monetization Slot 2: Horizontal AdSense Banner Placeholder at Bottom */}
-        <section className="mt-12 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-2">
-          <div className="p-3 rounded-full bg-slate-800/60 text-slate-500">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <span className="text-xs font-mono font-medium text-slate-400">
-            [Espacio AdSense - Banner Horizontal]
-          </span>
-          <span className="text-[10px] text-slate-600">728 x 90 Leaderboard / Responsive Slot</span>
-        </section>
-
-        <section id="ayuda" className="mt-12 max-w-3xl mx-auto text-center space-y-3">
-          <h2 className="text-lg font-bold text-slate-200">Facturación online simple para emprendedores de Uruguay</h2>
-          <p className="text-sm leading-6 text-slate-400">
-            FacturasOnlineUY te permite crear facturas en PDF, organizar los datos de tus clientes y descargar tus comprobantes de forma rápida y profesional.
-            Completa el formulario con la información de tu negocio y genera un documento listo para compartir con tus clientes.
-          </p>
-          <p className="text-sm leading-6 text-slate-400">
-            Nuestra herramienta está pensada para emprendedores de Uruguay, profesionales independientes y pequeñas empresas que necesitan gestionar su facturación online sin complicaciones.
-          </p>
-        </section>
+        <SeoContent page={currentPage} />
 
         <Opiniones />
 
@@ -973,9 +997,10 @@ function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <nav aria-label="Navegación interna" className="mb-3 flex justify-center gap-4">
-          <a href="#inicio" className="hover:text-indigo-400 transition">Inicio</a>
-          <a href="#generador" className="hover:text-indigo-400 transition">Generador</a>
+        <nav aria-label="Navegación principal" className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2">
+          <a href="/" className="hover:text-indigo-400 transition">Inicio</a>
+          <a href="/generador-de-facturas" className="hover:text-indigo-400 transition">Generador de facturas</a>
+          <a href="/generador-de-proformas" className="hover:text-indigo-400 transition">Generador de proformas</a>
           <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda / FAQ</a>
         </nav>
         <button
