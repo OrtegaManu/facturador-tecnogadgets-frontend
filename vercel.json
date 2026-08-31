@@ -7,6 +7,10 @@
     {
       "source": "/generador-de-proformas",
       "destination": "/generador-de-proformas/index.html"
+    },
+    {
+      "source": "/generador-de-presupuestos",
+      "destination": "/generador-de-presupuestos/index.html"
     }
   ]
 }

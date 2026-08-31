@@ -102,7 +102,7 @@ a { color: inherit; }
 }
 
 .document-type-fieldset {
-  width: min(100%, 300px);
+  width: min(100%, 440px);
   margin: 0;
   padding: 0 0 20px;
   border: 0;
@@ -204,6 +204,13 @@ a { color: inherit; }
 .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
 .field-grid.four-columns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .field.full { grid-column: 1 / -1; }
+.field-hint {
+  margin-top: 7px;
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .field label, .item-field label {
   display: block;
   margin: 0 0 7px;
@@ -232,6 +239,62 @@ textarea.control { min-height: 104px; resize: vertical; }
   outline: 2px solid color-mix(in srgb, var(--focus) 24%, transparent);
   outline-offset: 0;
 }
+
+.local-preferences {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.remember-issuer {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #bdc5cc;
+  font-size: 13px;
+  cursor: pointer;
+}
+.remember-issuer input { width: 17px; height: 17px; accent-color: var(--accent); }
+.local-preferences .field-hint { margin: 0; }
+.text-button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.optional-section { margin: 0; }
+.optional-section > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  cursor: pointer;
+  list-style: none;
+}
+.optional-section > summary::-webkit-details-marker { display: none; }
+.optional-section > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 20px;
+  font-weight: 400;
+}
+.optional-section[open] > summary::after { content: '−'; }
+.optional-section > summary .section-kicker { margin-left: 4px; font-weight: 400; }
+.optional-fields { padding-top: 20px; }
 
 .secondary-button {
   min-height: 44px;
@@ -481,6 +544,8 @@ textarea.control { min-height: 104px; resize: vertical; }
   .item-number { display: none; }
   .opinion-actions { align-items: stretch; flex-direction: column; }
   .opinion-actions .secondary-button { width: 100%; }
+  .document-type-option span { padding-inline: 7px; font-size: 12px; }
+  .local-preferences { align-items: flex-start; flex-direction: column; gap: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

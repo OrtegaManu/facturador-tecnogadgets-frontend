@@ -63,6 +63,27 @@ export const SEO_PAGES = {
       ['¿Puedo crear una proforma desde el celular?', 'Sí. Podés completar y descargar la proforma desde una pantalla móvil.'],
       ['¿Se guardan mis datos?', 'El generador procesa los datos necesarios para crear el PDF. Revisá la política de privacidad definitiva antes de hacer afirmaciones adicionales sobre almacenamiento.']
     ]
+  },
+  '/generador-de-presupuestos': {
+    path: '/generador-de-presupuestos',
+    title: 'Generador de Presupuestos Online Uruguay | PDF gratis',
+    description: 'Creá presupuestos profesionales en PDF gratis y sin registro. Detallá productos, servicios, precios y condiciones para tus clientes en Uruguay.',
+    h1: 'Generador de presupuestos online',
+    heroIntro: 'Crea un presupuesto en PDF para enviar a tu cliente. Sin registro.',
+    intro: 'Armá un presupuesto claro para cotizar trabajos, productos o servicios antes de confirmar una venta. Podés indicar precios, impuestos, vigencia y forma de pago, y descargar el documento en PDF.',
+    documentType: 'PRESUPUESTO',
+    documentLabel: 'presupuesto',
+    howItWorks: [
+      'Completá los datos de tu negocio y de tu cliente.',
+      'Detallá el trabajo, producto o servicio con sus importes.',
+      'Agregá condiciones opcionales y descargá el presupuesto en PDF.'
+    ],
+    faq: [
+      ['¿Cómo crear un presupuesto online?', 'Ingresá los datos de las partes, agregá los conceptos cotizados y generá el PDF para compartirlo.'],
+      ['¿Puedo indicar la vigencia del presupuesto?', 'Sí. La sección opcional permite agregar vencimiento, forma de pago y observaciones.'],
+      ['¿El presupuesto incluye IVA y descuentos?', 'Sí. Podés configurar IVA y descuentos por línea, además de un descuento global.'],
+      ['¿Un presupuesto es una factura fiscal?', 'No. Es una propuesta comercial y no constituye un comprobante fiscal oficial emitido ante la DGI.']
+    ]
   }
 }
 

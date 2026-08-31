@@ -1,5 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { getSeoPage } from './seoPages.js'
+import {
+  DOCUMENT_TYPES,
+  clearIssuerData,
+  commitDocumentNumber,
+  getDocumentNumbers,
+  loadIssuerData,
+  saveIssuerData
+} from './utils/localPersistence.js'
 
 const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
 const COMMENTS_URL = API_URL ? `${API_URL}/api/comentarios` : null
@@ -178,18 +186,24 @@ function SeoContent({ page }) {
 function App() {
   const currentPage = getSeoPage(typeof window === 'undefined' ? '/' : window.location.pathname)
   // States
-  const [emisor, setEmisor] = useState(DEFAULT_EMISOR)
+  const [initialIssuer] = useState(() => loadIssuerData())
+  const [emisor, setEmisor] = useState(() => initialIssuer || DEFAULT_EMISOR)
+  const [rememberIssuer, setRememberIssuer] = useState(() => Boolean(initialIssuer))
+  const [hasSavedIssuer, setHasSavedIssuer] = useState(() => Boolean(initialIssuer))
   const [cliente, setCliente] = useState(DEFAULT_CLIENTE)
-  const [configFactura, setConfigFactura] = useState({
-    numero: currentPage.documentType === 'PROFORMA' ? 'P001' : 'F001',
+  const [documentNumbers, setDocumentNumbers] = useState(() => getDocumentNumbers())
+  const [configFactura, setConfigFactura] = useState(() => ({
+    numero: getDocumentNumbers()[currentPage.documentType],
     fecha: new Date().toISOString().split('T')[0],
     moneda: 'USD',
     tipoDocumento: currentPage.documentType
-  })
+  }))
   const [descuentoGlobal, setDescuentoGlobal] = useState(0)
   const [items, setItems] = useState(INITIAL_ITEMS)
   const [condicionesComerciales, setCondicionesComerciales] = useState('')
   const [datosTransferencia, setDatosTransferencia] = useState('')
+  const [fechaVencimiento, setFechaVencimiento] = useState('')
+  const [formaPago, setFormaPago] = useState('')
 
   // Status states
   const [loading, setLoading] = useState(false)
@@ -198,7 +212,25 @@ function App() {
   const [termsOpen, setTermsOpen] = useState(false)
   const previousFocusRef = useRef(null)
   const closeTermsButtonRef = useRef(null)
-  const documentLabel = configFactura.tipoDocumento === 'PROFORMA' ? 'proforma' : 'factura'
+  const documentLabel = {
+    FACTURA: 'factura',
+    PROFORMA: 'proforma',
+    PRESUPUESTO: 'presupuesto'
+  }[configFactura.tipoDocumento] || 'documento'
+
+  useEffect(() => {
+    document.title = currentPage.title
+    const description = document.querySelector('meta[name="description"]')
+    const canonical = document.querySelector('link[rel="canonical"]')
+    description?.setAttribute('content', currentPage.description)
+    canonical?.setAttribute('href', `https://facturasonlineuy.org${currentPage.path}`)
+  }, [currentPage])
+
+  useEffect(() => {
+    if (rememberIssuer) {
+      setHasSavedIssuer(saveIssuerData(emisor))
+    }
+  }, [emisor, rememberIssuer])
 
   useEffect(() => {
     if (!termsOpen) return undefined
@@ -234,10 +266,40 @@ function App() {
   const handleConfigChange = (e) => {
     const { name, value } = e.target
     setConfigFactura((prev) => ({ ...prev, [name]: value }))
+    if (name === 'numero') {
+      setDocumentNumbers((prev) => ({ ...prev, [configFactura.tipoDocumento]: value }))
+    }
   }
 
   const handleDocumentTypeChange = (event) => {
-    setConfigFactura((prev) => ({ ...prev, tipoDocumento: event.target.value }))
+    const nextType = event.target.value
+    if (!DOCUMENT_TYPES.includes(nextType)) return
+    setDocumentNumbers((prev) => ({
+      ...prev,
+      [configFactura.tipoDocumento]: configFactura.numero
+    }))
+    setConfigFactura((prev) => ({
+      ...prev,
+      tipoDocumento: nextType,
+      numero: documentNumbers[nextType]
+    }))
+  }
+
+  const handleRememberIssuerChange = (event) => {
+    const shouldRemember = event.target.checked
+    setRememberIssuer(shouldRemember)
+    if (shouldRemember) {
+      setHasSavedIssuer(saveIssuerData(emisor))
+    } else {
+      clearIssuerData()
+      setHasSavedIssuer(false)
+    }
+  }
+
+  const handleClearSavedIssuer = () => {
+    clearIssuerData()
+    setRememberIssuer(false)
+    setHasSavedIssuer(false)
   }
 
   // Items Handlers
@@ -335,6 +397,8 @@ function App() {
     setErrorMsg(null)
     setSuccessMsg(null)
 
+    const submittedType = configFactura.tipoDocumento
+    const submittedNumber = configFactura.numero
     const payload = {
       emisor: {
         ...emisor,
@@ -350,6 +414,9 @@ function App() {
         fechaEmision: configFactura.fecha,
         moneda: configFactura.moneda,
         tipoDocumento: configFactura.tipoDocumento,
+        fechaVencimiento: fechaVencimiento || null,
+        formaPago: formaPago.trim() || null,
+        observaciones: condicionesComerciales.trim() || null,
         descuentoGlobalPorcentaje: Number(descuentoGlobal) || 0,
         subtotal: totals.subtotalFinal,
         descuentoTotal: totals.totalDescuentoLineas + totals.montoDescuentoGlobal,
@@ -392,14 +459,25 @@ function App() {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      const fileLabel = configFactura.tipoDocumento === 'PROFORMA' ? 'Proforma' : 'Factura'
-      link.setAttribute('download', `${fileLabel}_${configFactura.numero || 'F001'}.pdf`)
+      const fileLabel = {
+        FACTURA: 'Factura',
+        PROFORMA: 'Proforma',
+        PRESUPUESTO: 'Presupuesto'
+      }[submittedType]
+      link.setAttribute('download', `${fileLabel}_${submittedNumber || '00001'}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
 
-      setSuccessMsg(`¡${fileLabel} descargada con éxito!`)
+      setSuccessMsg(`¡PDF de ${fileLabel.toLowerCase()} descargado con éxito!`)
+      const nextNumber = commitDocumentNumber(submittedType, submittedNumber)
+      setDocumentNumbers((prev) => ({ ...prev, [submittedType]: nextNumber }))
+      setConfigFactura((prev) => (
+        prev.tipoDocumento === submittedType && prev.numero === submittedNumber
+          ? { ...prev, numero: nextNumber }
+          : prev
+      ))
     } catch (err) {
       console.error('Error al generar factura:', err)
       setErrorMsg(err.message || 'Error al conectar con el backend.')
@@ -464,6 +542,16 @@ function App() {
                 />
                 <span>Proforma</span>
               </label>
+              <label className="document-type-option">
+                <input
+                  type="radio"
+                  name="tipo-documento"
+                  value="PRESUPUESTO"
+                  checked={configFactura.tipoDocumento === 'PRESUPUESTO'}
+                  onChange={handleDocumentTypeChange}
+                />
+                <span>Presupuesto</span>
+              </label>
             </div>
           </fieldset>
 
@@ -492,6 +580,16 @@ function App() {
                 <label htmlFor="emisor-email">Email</label>
                 <input id="emisor-email" className="control" type="email" name="email" value={emisor.email} onChange={handleEmisorChange} autoComplete="email" />
               </div>
+            </div>
+            <div className="local-preferences">
+              <label className="remember-issuer">
+                <input type="checkbox" checked={rememberIssuer} onChange={handleRememberIssuerChange} />
+                <span>Recordar mis datos en este dispositivo</span>
+              </label>
+              <span className="field-hint">Guardado solo en este dispositivo.</span>
+              {hasSavedIssuer && (
+                <button type="button" className="text-button" onClick={handleClearSavedIssuer}>Borrar datos guardados</button>
+              )}
             </div>
           </section>
 
@@ -523,6 +621,7 @@ function App() {
               <div className="field">
                 <label htmlFor="documento-numero">Número</label>
                 <input id="documento-numero" className="control" type="text" name="numero" value={configFactura.numero} onChange={handleConfigChange} required />
+                <span className="field-hint">Numeración guardada en este dispositivo; no sustituye la numeración fiscal oficial.</span>
               </div>
               <div className="field">
                 <label htmlFor="documento-fecha">Fecha</label>
@@ -610,22 +709,30 @@ function App() {
             </div>
           </section>
 
-          <section className="form-section" aria-labelledby="payment-heading">
-            <div className="section-header">
-              <h2 id="payment-heading">Condiciones y pago</h2>
+          <details className="form-section optional-section">
+            <summary>
+              <span>Condiciones y notas</span>
               <span className="section-kicker">Opcional</span>
-            </div>
-            <div className="field-grid">
+            </summary>
+            <div className="field-grid optional-fields">
               <div className="field">
-                <label htmlFor="condiciones-comerciales">Condiciones comerciales</label>
-                <textarea id="condiciones-comerciales" className="control" rows="3" value={condicionesComerciales} onChange={(event) => setCondicionesComerciales(event.target.value)} placeholder="Forma de pago, validez…" />
+                <label htmlFor="fecha-vencimiento">Fecha de vencimiento</label>
+                <input id="fecha-vencimiento" className="control" type="date" min={configFactura.fecha} value={fechaVencimiento} onChange={(event) => setFechaVencimiento(event.target.value)} />
               </div>
               <div className="field">
+                <label htmlFor="forma-pago">Forma de pago</label>
+                <input id="forma-pago" className="control" type="text" maxLength={120} value={formaPago} onChange={(event) => setFormaPago(event.target.value)} placeholder="Contado, transferencia, 30 días…" />
+              </div>
+              <div className="field full">
+                <label htmlFor="condiciones-comerciales">Observaciones</label>
+                <textarea id="condiciones-comerciales" className="control" rows="3" maxLength={1000} value={condicionesComerciales} onChange={(event) => setCondicionesComerciales(event.target.value)} placeholder="Validez, alcance u otras condiciones…" />
+              </div>
+              <div className="field full">
                 <label htmlFor="datos-transferencia">Datos de transferencia</label>
-                <textarea id="datos-transferencia" className="control" rows="3" value={datosTransferencia} onChange={(event) => setDatosTransferencia(event.target.value)} placeholder="Banco, cuenta, titular…" />
+                <textarea id="datos-transferencia" className="control" rows="3" maxLength={1000} value={datosTransferencia} onChange={(event) => setDatosTransferencia(event.target.value)} placeholder="Banco, cuenta, titular…" />
               </div>
             </div>
-          </section>
+          </details>
 
           <section className="form-section" aria-labelledby="summary-heading">
             <div className="section-header">
@@ -678,6 +785,7 @@ function App() {
             <a href="/">Inicio</a>
             <a href="/generador-de-facturas">Facturas</a>
             <a href="/generador-de-proformas">Proformas</a>
+            <a href="/generador-de-presupuestos">Presupuestos</a>
             <a href="#ayuda">Ayuda</a>
             <button type="button" onClick={() => setTermsOpen(true)} className="footer-link-button">Términos</button>
           </nav>
