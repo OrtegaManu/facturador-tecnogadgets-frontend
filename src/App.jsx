@@ -101,13 +101,13 @@ function Opiniones() {
   }
 
   return (
-    <section id="opiniones" aria-labelledby="opiniones-title" className="mt-12 max-w-4xl mx-auto min-h-[220px] space-y-5">
-      <div className="text-center space-y-2">
-        <h2 id="opiniones-title" className="text-lg font-bold text-slate-200">Opiniones</h2>
-        <p className="text-sm text-slate-400">Comparte tu experiencia de forma anónima y ayuda a mejorar FacturasOnlineUY.</p>
+    <section id="opiniones" aria-labelledby="opiniones-title" className="opinions">
+      <div className="opinions-heading">
+        <h2 id="opiniones-title">Opiniones</h2>
+        <p>Comparte tu experiencia de forma anónima y ayuda a mejorar FacturasOnlineUY.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
+      <form onSubmit={handleSubmit} className="opinion-form">
         <label htmlFor="opinion-texto" className="sr-only">Escribe tu opinión</label>
         <textarea
           id="opinion-texto"
@@ -116,36 +116,34 @@ function Opiniones() {
           maxLength={600}
           rows="4"
           placeholder="¿Qué te pareció la herramienta?"
-          className="w-full resize-none bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+          className="control"
         />
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-slate-500">{texto.length}/600 caracteres</span>
+        <div className="opinion-actions">
+          <span className="character-count">{texto.length}/600 caracteres</span>
           <button
             type="submit"
             disabled={enviando || !texto.trim() || !COMMENTS_URL}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="secondary-button"
           >
-            {enviando ? 'Enviando...' : 'Enviar opinión'}
+            {enviando ? 'Enviando…' : 'Enviar opinión'}
           </button>
         </div>
-        {mensaje && <p aria-live="polite" className="text-xs text-slate-400">{mensaje}</p>}
+        {mensaje && <p aria-live="polite" className="opinion-state">{mensaje}</p>}
       </form>
 
       {cargando ? (
-        <p className="text-center text-xs text-slate-500">Cargando opiniones...</p>
+        <p className="opinion-state">Cargando opiniones…</p>
       ) : comentarios.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="comments-list">
           {comentarios.map((comentario) => (
-            <article key={comentario.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2">
-              <p className="text-sm leading-6 text-slate-300">{comentario.texto}</p>
-              <time dateTime={comentario.fecha} className="block text-[11px] text-slate-600">
-                {new Date(comentario.fecha).toLocaleDateString('es-UY')}
-              </time>
+            <article key={comentario.id} className="comment">
+              <p>{comentario.texto}</p>
+              <time dateTime={comentario.fecha}>{new Date(comentario.fecha).toLocaleDateString('es-UY')}</time>
             </article>
           ))}
         </div>
       ) : (
-        <p className="text-center text-xs text-slate-500">Todavía no hay opiniones. ¡Sé la primera persona en compartir la tuya!</p>
+        <p className="opinion-state">Todavía no hay opiniones.</p>
       )}
     </section>
   )
@@ -153,21 +151,22 @@ function Opiniones() {
 
 function SeoContent({ page }) {
   return (
-    <div id="ayuda" className="mt-12 max-w-3xl mx-auto space-y-8">
-      <section aria-labelledby="how-heading" className="space-y-3">
-        <h2 id="how-heading" className="text-lg font-bold text-slate-200">Cómo funciona</h2>
-        <ol className="space-y-2 text-sm leading-6 text-slate-400 list-decimal list-inside">
+    <div id="ayuda" className="seo-content">
+      <p className="seo-description">{page.intro}</p>
+      <section aria-labelledby="how-heading" className="seo-block">
+        <h2 id="how-heading">Cómo funciona</h2>
+        <ol className="steps">
           {page.howItWorks.map((step) => <li key={step}>{step}</li>)}
         </ol>
       </section>
 
-      <section aria-labelledby="faq-heading" className="space-y-3">
-        <h2 id="faq-heading" className="text-lg font-bold text-slate-200">Preguntas frecuentes</h2>
-        <div className="space-y-2">
+      <section aria-labelledby="faq-heading" className="seo-block">
+        <h2 id="faq-heading">Preguntas frecuentes</h2>
+        <div className="faq-list">
           {page.faq.map(([question, answer]) => (
-            <details key={question} className="rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm">
-              <summary className="cursor-pointer font-medium text-slate-200">{question}</summary>
-              <p className="mt-2 leading-6 text-slate-400">{answer}</p>
+            <details key={question} className="faq-item">
+              <summary>{question}</summary>
+              <p>{answer}</p>
             </details>
           ))}
         </div>
@@ -178,7 +177,6 @@ function SeoContent({ page }) {
 
 function App() {
   const currentPage = getSeoPage(typeof window === 'undefined' ? '/' : window.location.pathname)
-  const documentLabel = currentPage.documentLabel
   // States
   const [emisor, setEmisor] = useState(DEFAULT_EMISOR)
   const [cliente, setCliente] = useState(DEFAULT_CLIENTE)
@@ -200,6 +198,7 @@ function App() {
   const [termsOpen, setTermsOpen] = useState(false)
   const previousFocusRef = useRef(null)
   const closeTermsButtonRef = useRef(null)
+  const documentLabel = configFactura.tipoDocumento === 'PROFORMA' ? 'proforma' : 'factura'
 
   useEffect(() => {
     if (!termsOpen) return undefined
@@ -235,6 +234,10 @@ function App() {
   const handleConfigChange = (e) => {
     const { name, value } = e.target
     setConfigFactura((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleDocumentTypeChange = (event) => {
+    setConfigFactura((prev) => ({ ...prev, tipoDocumento: event.target.value }))
   }
 
   // Items Handlers
@@ -389,13 +392,14 @@ function App() {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `Factura_${configFactura.numero || 'F001'}.pdf`)
+      const fileLabel = configFactura.tipoDocumento === 'PROFORMA' ? 'Proforma' : 'Factura'
+      link.setAttribute('download', `${fileLabel}_${configFactura.numero || 'F001'}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
 
-      setSuccessMsg('¡Factura descargada con éxito!')
+      setSuccessMsg(`¡${fileLabel} descargada con éxito!`)
     } catch (err) {
       console.error('Error al generar factura:', err)
       setErrorMsg(err.message || 'Error al conectar con el backend.')
@@ -405,626 +409,284 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Navbar */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <span className="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                FacturasOnlineUY
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                PRO
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <span className="text-xs text-slate-400 hidden md:flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Generador gratuito y sin registro</span>
-            </span>
-            <button
-              onClick={handleGeneratePdf}
-              disabled={loading}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md shadow-indigo-600/30 transition duration-150 disabled:opacity-50 flex items-center space-x-2"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Procesando...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  <span>Descargar PDF</span>
-                </>
-              )}
-            </button>
-          </div>
+    <div className="app-shell">
+      <header className="site-header">
+        <div className="header-inner">
+          <a href="/" className="brand">FacturasOnlineUY</a>
+          <span className="header-note">Gratis · sin registro · PDF al instante</span>
         </div>
       </header>
 
-      {/* Main Container - 2 Columns (65% / 35%) */}
-      <main id="inicio" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="inicio" className="main-shell">
+        <section aria-labelledby="generator-heading" className="intro">
+          <h1 id="generator-heading">{currentPage.h1}</h1>
+          <p>{currentPage.heroIntro}</p>
+        </section>
 
-        {/* Notifications */}
         {errorMsg && (
-          <div role="alert" className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm flex items-start space-x-3">
-            <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="flex-1">
-              <span className="font-semibold block">Error al procesar factura</span>
-              <span>{errorMsg}</span>
+          <div role="alert" className="status-message error">
+            <div>
+              <strong>Error al generar el PDF.</strong>
+              <div>{errorMsg}</div>
             </div>
-            <button type="button" aria-label="Cerrar mensaje de error" onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-200">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button type="button" aria-label="Cerrar mensaje de error" onClick={() => setErrorMsg(null)}>×</button>
           </div>
         )}
 
         {successMsg && (
-          <div role="status" className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>{successMsg}</span>
-            </div>
-            <button type="button" aria-label="Cerrar mensaje de éxito" onClick={() => setSuccessMsg(null)} className="text-emerald-400 hover:text-emerald-200">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+          <div role="status" className="status-message success">
+            <span>{successMsg}</span>
+            <button type="button" aria-label="Cerrar mensaje de éxito" onClick={() => setSuccessMsg(null)}>×</button>
           </div>
         )}
 
-        <form id="generador" onSubmit={handleGeneratePdf} className="flex flex-col lg:flex-row gap-8">
+        <form id="generador" onSubmit={handleGeneratePdf} className="invoice-form">
+          <fieldset className="document-type-fieldset">
+            <legend>Tipo de documento</legend>
+            <div className="document-type-control">
+              <label className="document-type-option">
+                <input
+                  type="radio"
+                  name="tipo-documento"
+                  value="FACTURA"
+                  checked={configFactura.tipoDocumento === 'FACTURA'}
+                  onChange={handleDocumentTypeChange}
+                />
+                <span>Factura</span>
+              </label>
+              <label className="document-type-option">
+                <input
+                  type="radio"
+                  name="tipo-documento"
+                  value="PROFORMA"
+                  checked={configFactura.tipoDocumento === 'PROFORMA'}
+                  onChange={handleDocumentTypeChange}
+                />
+                <span>Proforma</span>
+              </label>
+            </div>
+          </fieldset>
 
-          {/* LEFT COLUMN (65%) */}
-          <div className="w-full lg:w-[65%] space-y-8">
-
-            {/* Header Banner info */}
-            <section aria-labelledby="generator-heading" className="bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-slate-900 border border-indigo-800/40 rounded-2xl p-6 relative overflow-hidden">
-              <div className="relative z-10 space-y-1">
-                <h1 id="generator-heading" className="text-xl font-bold text-white">{currentPage.h1}</h1>
-                <p className="text-xs text-slate-300 max-w-xl">
-                  {currentPage.intro}
-                </p>
+          <section className="form-section" aria-labelledby="emisor-heading">
+            <div className="section-header">
+              <h2 id="emisor-heading">Datos del emisor</h2>
+            </div>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="emisor-nombre">Nombre / razón social</label>
+                <input id="emisor-nombre" className="control" type="text" name="nombre" value={emisor.nombre} onChange={handleEmisorChange} required autoComplete="organization" />
               </div>
-            </section>
-
-            {/* SECCIÓN 1: Datos del Emisor */}
-            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-slate-200">Datos del Emisor</h2>
+              <div className="field">
+                <label htmlFor="emisor-rut">RUT</label>
+                <input id="emisor-rut" className="control" type="text" name="rut" value={emisor.rut} onChange={handleEmisorChange} required inputMode="numeric" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label htmlFor="emisor-nombre" className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
-                  <input
-                    id="emisor-nombre"
-                    type="text"
-                    name="nombre"
-                    value={emisor.nombre}
-                    onChange={handleEmisorChange}
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="emisor-rut" className="block text-slate-400 mb-1 font-medium">RUT</label>
-                  <input
-                    id="emisor-rut"
-                    type="text"
-                    name="rut"
-                    value={emisor.rut}
-                    onChange={handleEmisorChange}
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label htmlFor="emisor-direccion" className="block text-slate-400 mb-1 font-medium">Dirección</label>
-                  <input
-                    id="emisor-direccion"
-                    type="text"
-                    name="direccion"
-                    value={emisor.direccion}
-                    onChange={handleEmisorChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="emisor-telefono" className="block text-slate-400 mb-1 font-medium">Teléfono</label>
-                  <input
-                    id="emisor-telefono"
-                    type="text"
-                    name="telefono"
-                    value={emisor.telefono}
-                    onChange={handleEmisorChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="emisor-email" className="block text-slate-400 mb-1 font-medium">Email</label>
-                  <input
-                    id="emisor-email"
-                    type="email"
-                    name="email"
-                    value={emisor.email}
-                    onChange={handleEmisorChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
+              <div className="field full">
+                <label htmlFor="emisor-direccion">Dirección</label>
+                <input id="emisor-direccion" className="control" type="text" name="direccion" value={emisor.direccion} onChange={handleEmisorChange} autoComplete="street-address" />
               </div>
-            </section>
-
-            {/* SECCIÓN 2: Datos del Cliente */}
-            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-                <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-slate-200">Datos del Cliente</h2>
+              <div className="field">
+                <label htmlFor="emisor-telefono">Teléfono</label>
+                <input id="emisor-telefono" className="control" type="tel" name="telefono" value={emisor.telefono} onChange={handleEmisorChange} autoComplete="tel" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label htmlFor="cliente-nombre" className="block text-slate-400 mb-1 font-medium">Nombre / Razón Social</label>
-                  <input
-                    id="cliente-nombre"
-                    type="text"
-                    name="nombre"
-                    value={cliente.nombre}
-                    onChange={handleClienteChange}
-                    required
-                    placeholder="Empresa o Persona física"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-purple-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="cliente-documento" className="block text-slate-400 mb-1 font-medium">Documento (RUT / CI)</label>
-                  <input
-                    id="cliente-documento"
-                    type="text"
-                    name="documento"
-                    value={cliente.documento}
-                    onChange={handleClienteChange}
-                    required
-                    placeholder="123456780019"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-purple-500 transition"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label htmlFor="cliente-direccion" className="block text-slate-400 mb-1 font-medium">Dirección</label>
-                  <input
-                    id="cliente-direccion"
-                    type="text"
-                    name="direccion"
-                    value={cliente.direccion}
-                    onChange={handleClienteChange}
-                    placeholder="Calle, Número, Ciudad"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-purple-500 transition"
-                  />
-                </div>
+              <div className="field">
+                <label htmlFor="emisor-email">Email</label>
+                <input id="emisor-email" className="control" type="email" name="email" value={emisor.email} onChange={handleEmisorChange} autoComplete="email" />
               </div>
-            </section>
+            </div>
+          </section>
 
-            {/* SECCIÓN 3: Configuración de Factura */}
-            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-slate-200">Configuración de {documentLabel}</h2>
+          <section className="form-section" aria-labelledby="cliente-heading">
+            <div className="section-header">
+              <h2 id="cliente-heading">Datos del cliente</h2>
+            </div>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="cliente-nombre">Nombre / razón social</label>
+                <input id="cliente-nombre" className="control" type="text" name="nombre" value={cliente.nombre} onChange={handleClienteChange} required placeholder="Empresa o persona" autoComplete="off" />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label htmlFor="documento-numero" className="block text-slate-400 mb-1 font-medium">Número de {documentLabel}</label>
-                  <input
-                    id="documento-numero"
-                    type="text"
-                    name="numero"
-                    value={configFactura.numero}
-                    onChange={handleConfigChange}
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 font-mono focus:outline-none focus:border-emerald-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="documento-fecha" className="block text-slate-400 mb-1 font-medium">Fecha Emisión</label>
-                  <input
-                    id="documento-fecha"
-                    type="date"
-                    name="fecha"
-                    value={configFactura.fecha}
-                    onChange={handleConfigChange}
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 transition"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="documento-moneda" className="block text-slate-400 mb-1 font-medium">Moneda</label>
-                  <select
-                    id="documento-moneda"
-                    name="moneda"
-                    value={configFactura.moneda}
-                    onChange={handleConfigChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 font-medium focus:outline-none focus:border-emerald-500 transition cursor-pointer"
-                  >
-                    <option value="USD">USD (Dólares)</option>
-                    <option value="UYU">UYU (Pesos Uruguayos)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="descuento-global" className="block text-slate-400 mb-1 font-medium">Desc. Global (%)</label>
-                  <input
-                    id="descuento-global"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={descuentoGlobal}
-                    onChange={(e) => setDescuentoGlobal(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500 transition"
-                  />
-                </div>
+              <div className="field">
+                <label htmlFor="cliente-documento">Documento (RUT / CI)</label>
+                <input id="cliente-documento" className="control" type="text" name="documento" value={cliente.documento} onChange={handleClienteChange} required placeholder="123456780019" inputMode="numeric" autoComplete="off" />
               </div>
-            </section>
-
-            {/* SECCIÓN 4: Líneas de Producto */}
-            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-base font-semibold text-slate-200">Líneas de Producto / Servicio</h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition flex items-center space-x-1 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Agregar Ítem</span>
-                </button>
+              <div className="field full">
+                <label htmlFor="cliente-direccion">Dirección</label>
+                <input id="cliente-direccion" className="control" type="text" name="direccion" value={cliente.direccion} onChange={handleClienteChange} placeholder="Calle, número, ciudad" autoComplete="off" />
               </div>
+            </div>
+          </section>
 
-              {/* Items List */}
-              <div className="space-y-3">
-                {items.map((item, idx) => {
-                  const processed = totals.processedItems[idx] || {}
-                  return (
-                    <div
-                      key={item.id}
-                      className="bg-slate-950/80 border border-slate-800/90 rounded-xl p-4 space-y-3 transition hover:border-slate-700"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-mono font-bold text-slate-400">
-                          #{idx + 1}
-                        </span>
-                        <div className="flex-1">
-                          <label htmlFor={`item-${item.id}-descripcion`} className="sr-only">Descripción del ítem {idx + 1}</label>
-                          <input
-                            id={`item-${item.id}-descripcion`}
-                            type="text"
-                            placeholder="Descripción del producto o servicio"
-                            value={item.descripcion}
-                            onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
-                            required
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.id)}
-                          title="Eliminar fila"
-                          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition cursor-pointer"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                        <div>
-                          <label htmlFor={`item-${item.id}-cantidad`} className="block text-slate-400 mb-1">Cantidad</label>
-                          <input
-                            id={`item-${item.id}-cantidad`}
-                            type="number"
-                            min="1"
-                            value={item.cantidad}
-                            onChange={(e) => handleItemChange(item.id, 'cantidad', e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor={`item-${item.id}-precio`} className="block text-slate-400 mb-1">Precio Unit. ({symbol})</label>
-                          <input
-                            id={`item-${item.id}-precio`}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.precioUnitario}
-                            onChange={(e) => handleItemChange(item.id, 'precioUnitario', e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor={`item-${item.id}-descuento`} className="block text-slate-400 mb-1">Desc. (%)</label>
-                          <input
-                            id={`item-${item.id}-descuento`}
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.5"
-                            value={item.descuentoPorcentaje}
-                            onChange={(e) => handleItemChange(item.id, 'descuentoPorcentaje', e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
-                          />
-                        </div>
-
-                        <div className="flex flex-col justify-end">
-                          <label className="inline-flex items-center space-x-2 cursor-pointer pb-2">
-                            <input
-                              type="checkbox"
-                              checked={item.aplicaIva}
-                              onChange={(e) => handleItemChange(item.id, 'aplicaIva', e.target.checked)}
-                              className="rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                            />
-                            <span className="text-slate-300 font-medium text-[11px]">Aplica IVA 22%</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Row Total calculation preview */}
-                      <div className="flex items-center justify-end space-x-4 text-[11px] text-slate-400 border-t border-slate-800/60 pt-2 font-mono">
-                        <span>Subtotal: {symbol} {(processed.subtotalLinea || 0).toFixed(2)}</span>
-                        {item.aplicaIva && <span>IVA: {symbol} {(processed.ivaLinea || 0).toFixed(2)}</span>}
-                        <span className="font-bold text-slate-200">Total: {symbol} {(processed.totalLinea || 0).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )
-                })}
+          <section className="form-section" aria-labelledby="config-heading">
+            <div className="section-header">
+              <h2 id="config-heading">Configuración de {documentLabel}</h2>
+            </div>
+            <div className="field-grid four-columns">
+              <div className="field">
+                <label htmlFor="documento-numero">Número</label>
+                <input id="documento-numero" className="control" type="text" name="numero" value={configFactura.numero} onChange={handleConfigChange} required />
               </div>
-            </section>
-
-            {/* SECCIÓN 5: Textos Legales y Datos de Transferencia */}
-            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-slate-200">Condiciones Comerciales y Pago</h2>
+              <div className="field">
+                <label htmlFor="documento-fecha">Fecha</label>
+                <input id="documento-fecha" className="control" type="date" name="fecha" value={configFactura.fecha} onChange={handleConfigChange} required />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label htmlFor="condiciones-comerciales" className="block text-slate-400 mb-1 font-medium">Condiciones Comerciales</label>
-                  <textarea
-                    id="condiciones-comerciales"
-                    rows="3"
-                    value={condicionesComerciales}
-                    onChange={(e) => setCondicionesComerciales(e.target.value)}
-                    placeholder="Términos de pago, validez de la oferta..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-100 focus:outline-none focus:border-amber-500 transition resize-none"
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label htmlFor="datos-transferencia" className="block text-slate-400 mb-1 font-medium">Datos de Transferencia Bancaria</label>
-                  <textarea
-                    id="datos-transferencia"
-                    rows="3"
-                    value={datosTransferencia}
-                    onChange={(e) => setDatosTransferencia(e.target.value)}
-                    placeholder="Banco, Nro. de cuenta, titular..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-100 focus:outline-none focus:border-amber-500 transition resize-none"
-                  ></textarea>
-                </div>
+              <div className="field">
+                <label htmlFor="documento-moneda">Moneda</label>
+                <select id="documento-moneda" className="control" name="moneda" value={configFactura.moneda} onChange={handleConfigChange}>
+                  <option value="USD">USD</option>
+                  <option value="UYU">UYU</option>
+                </select>
               </div>
-            </section>
+              <div className="field">
+                <label htmlFor="descuento-global">Descuento global</label>
+                <input id="descuento-global" className="control" type="number" min="0" max="100" step="0.1" value={descuentoGlobal} onChange={(event) => setDescuentoGlobal(event.target.value)} inputMode="decimal" />
+              </div>
+            </div>
+          </section>
 
-            {/* Main Form CTA Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 text-white font-bold text-base shadow-xl shadow-indigo-600/25 transition duration-200 transform active:scale-[0.99] disabled:opacity-50 flex items-center justify-center space-x-3 cursor-pointer"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Procesando solicitud...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Generar y Descargar PDF</span>
-                  </>
-                )}
-              </button>
+          <section className="form-section" aria-labelledby="items-heading">
+            <div className="section-header">
+              <h2 id="items-heading">Productos o servicios</h2>
+              <button type="button" onClick={handleAddItem} className="secondary-button">Agregar línea</button>
             </div>
 
-            <section aria-labelledby="beneficios-title" className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-              <h2 id="beneficios-title" className="text-base font-semibold text-slate-200 mb-4">Beneficios de facturar online</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <article>
-                  <h3 className="font-semibold text-indigo-300 mb-1">Rápido y sencillo</h3>
-                  <p className="text-slate-400 leading-5">Completa tus datos y genera un comprobante profesional en pocos pasos.</p>
-                </article>
-                <article>
-                  <h3 className="font-semibold text-purple-300 mb-1">PDF al instante</h3>
-                  <p className="text-slate-400 leading-5">Descarga tu factura en PDF para compartirla con tus clientes.</p>
-                </article>
-                <article>
-                  <h3 className="font-semibold text-emerald-300 mb-1">Pensado para Uruguay</h3>
-                  <p className="text-slate-400 leading-5">Una herramienta práctica para freelancers, emprendedores y empresas.</p>
-                </article>
-              </div>
-            </section>
-
-          </div>
-
-          {/* RIGHT COLUMN (35% Sticky Sidebar) */}
-          <div className="w-full lg:w-[35%] space-y-6">
-            <div className="sticky top-24 space-y-6">
-
-              {/* Real-time Summary Card */}
-              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 backdrop-blur-sm">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="font-bold text-slate-200 text-sm flex items-center space-x-2">
-                    <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m-6 4h6m-6 4h6M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>Resumen de Factura</span>
-                  </h3>
-                  <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                    {configFactura.moneda}
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Subtotal Líneas:</span>
-                    <span className="font-mono">{symbol} {totals.rawSubtotal.toFixed(2)}</span>
-                  </div>
-
-                  {totals.totalDescuentoLineas > 0 && (
-                    <div className="flex justify-between text-amber-400">
-                      <span>Descuentos en Ítems:</span>
-                      <span className="font-mono">-{symbol} {totals.totalDescuentoLineas.toFixed(2)}</span>
+            <div className="items-list">
+              {items.map((item, idx) => {
+                const processed = totals.processedItems[idx] || {}
+                return (
+                  <div key={item.id} className="item-row">
+                    <div className="item-row-top">
+                      <span className="item-number">{String(idx + 1).padStart(2, '0')}</span>
+                      <div className="item-field">
+                        <label htmlFor={'item-' + item.id + '-descripcion'}>Descripción</label>
+                        <input
+                          id={'item-' + item.id + '-descripcion'}
+                          className="control"
+                          type="text"
+                          placeholder="Producto o servicio"
+                          value={item.descripcion}
+                          onChange={(event) => handleItemChange(item.id, 'descripcion', event.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        title="Eliminar línea"
+                        aria-label={'Eliminar línea ' + (idx + 1)}
+                        className="remove-item"
+                      >
+                        ×
+                      </button>
                     </div>
-                  )}
 
-                  {totals.montoDescuentoGlobal > 0 && (
-                    <div className="flex justify-between text-amber-400">
-                      <span>Descuento Global ({descuentoGlobal}%):</span>
-                      <span className="font-mono">-{symbol} {totals.montoDescuentoGlobal.toFixed(2)}</span>
+                    <div className="item-meta-grid">
+                      <div className="item-field">
+                        <label htmlFor={'item-' + item.id + '-cantidad'}>Cantidad</label>
+                        <input id={'item-' + item.id + '-cantidad'} className="control" type="number" min="1" value={item.cantidad} onChange={(event) => handleItemChange(item.id, 'cantidad', event.target.value)} inputMode="numeric" />
+                      </div>
+                      <div className="item-field">
+                        <label htmlFor={'item-' + item.id + '-precio'}>Precio ({symbol})</label>
+                        <input id={'item-' + item.id + '-precio'} className="control" type="number" min="0" step="0.01" value={item.precioUnitario} onChange={(event) => handleItemChange(item.id, 'precioUnitario', event.target.value)} inputMode="decimal" />
+                      </div>
+                      <div className="item-field">
+                        <label htmlFor={'item-' + item.id + '-descuento'}>Descuento %</label>
+                        <input id={'item-' + item.id + '-descuento'} className="control" type="number" min="0" max="100" step="0.5" value={item.descuentoPorcentaje} onChange={(event) => handleItemChange(item.id, 'descuentoPorcentaje', event.target.value)} inputMode="decimal" />
+                      </div>
+                      <div className="checkbox-field">
+                        <label>
+                          <input type="checkbox" checked={item.aplicaIva} onChange={(event) => handleItemChange(item.id, 'aplicaIva', event.target.checked)} />
+                          <span>IVA 22%</span>
+                        </label>
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-between text-slate-400">
-                    <span>Base Imponible Subtotal:</span>
-                    <span className="font-mono">{symbol} {totals.subtotalFinal.toFixed(2)}</span>
+                    <div className="item-total" aria-live="polite">
+                      <span>Subtotal {symbol} {(processed.subtotalLinea || 0).toFixed(2)}</span>
+                      {item.aplicaIva && <span>IVA {symbol} {(processed.ivaLinea || 0).toFixed(2)}</span>}
+                      <strong>Total {symbol} {(processed.totalLinea || 0).toFixed(2)}</strong>
+                    </div>
                   </div>
-
-                  <div className="flex justify-between text-slate-400">
-                    <span>IVA (22%):</span>
-                    <span className="font-mono">{symbol} {totals.totalIva.toFixed(2)}</span>
-                  </div>
-
-                  <div className="border-t border-slate-800 pt-3 flex justify-between items-baseline">
-                    <span className="text-sm font-bold text-white">TOTAL A PAGAR:</span>
-                    <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent font-mono">
-                      {symbol} {totals.totalFinal.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Sidebar CTA */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-xs shadow-lg shadow-indigo-600/20 transition duration-150 disabled:opacity-50 flex items-center justify-center space-x-2 cursor-pointer"
-                >
-                  {loading ? (
-                    <span>Procesando...</span>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    <span>Descargar {documentLabel} PDF</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
+                )
+              })}
             </div>
-          </div>
+          </section>
 
+          <section className="form-section" aria-labelledby="payment-heading">
+            <div className="section-header">
+              <h2 id="payment-heading">Condiciones y pago</h2>
+              <span className="section-kicker">Opcional</span>
+            </div>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="condiciones-comerciales">Condiciones comerciales</label>
+                <textarea id="condiciones-comerciales" className="control" rows="3" value={condicionesComerciales} onChange={(event) => setCondicionesComerciales(event.target.value)} placeholder="Forma de pago, validez…" />
+              </div>
+              <div className="field">
+                <label htmlFor="datos-transferencia">Datos de transferencia</label>
+                <textarea id="datos-transferencia" className="control" rows="3" value={datosTransferencia} onChange={(event) => setDatosTransferencia(event.target.value)} placeholder="Banco, cuenta, titular…" />
+              </div>
+            </div>
+          </section>
+
+          <section className="form-section" aria-labelledby="summary-heading">
+            <div className="section-header">
+              <h2 id="summary-heading">Resumen</h2>
+              <span className="section-kicker">{configFactura.moneda}</span>
+            </div>
+            <div className="totals">
+              <div className="total-row"><span>Subtotal</span><span>{symbol} {totals.rawSubtotal.toFixed(2)}</span></div>
+              {totals.totalDescuentoLineas > 0 && (
+                <div className="total-row discount"><span>Descuentos en líneas</span><span>−{symbol} {totals.totalDescuentoLineas.toFixed(2)}</span></div>
+              )}
+              {totals.montoDescuentoGlobal > 0 && (
+                <div className="total-row discount"><span>Descuento global ({descuentoGlobal}%)</span><span>−{symbol} {totals.montoDescuentoGlobal.toFixed(2)}</span></div>
+              )}
+              <div className="total-row"><span>IVA</span><span>{symbol} {totals.totalIva.toFixed(2)}</span></div>
+              <div className="total-row grand-total"><span>Total</span><span>{symbol} {totals.totalFinal.toFixed(2)}</span></div>
+            </div>
+            <button type="submit" disabled={loading} className="primary-button">
+              {loading ? 'Generando PDF…' : 'Generar PDF'}
+            </button>
+          </section>
         </form>
 
+        <section aria-labelledby="beneficios-title" className="benefits">
+          <h2 id="beneficios-title">Una herramienta directa</h2>
+          <div className="benefits-grid">
+            <article>
+              <h3>Sin registro</h3>
+              <p>Completa los datos y genera el documento sin crear una cuenta.</p>
+            </article>
+            <article>
+              <h3>PDF listo para compartir</h3>
+              <p>Descarga un archivo ordenado para enviarlo a tu cliente.</p>
+            </article>
+            <article>
+              <h3>Hecho para Uruguay</h3>
+              <p>Incluye moneda local, RUT, IVA y datos comerciales habituales.</p>
+            </article>
+          </div>
+        </section>
+
         <SeoContent page={currentPage} />
-
         <Opiniones />
-
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <nav aria-label="Navegación principal" className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2">
-          <a href="/" className="hover:text-indigo-400 transition">Inicio</a>
-          <a href="/generador-de-facturas" className="hover:text-indigo-400 transition">Generador de facturas</a>
-          <a href="/generador-de-proformas" className="hover:text-indigo-400 transition">Generador de proformas</a>
-          <a href="#ayuda" className="hover:text-indigo-400 transition">Ayuda / FAQ</a>
-        </nav>
-        <button
-          type="button"
-          onClick={() => setTermsOpen(true)}
-          className="text-slate-600 hover:text-indigo-400 transition underline underline-offset-2"
-        >
-          Términos y Condiciones
-        </button>
-        <p>© 2026 FacturasOnlineUY. Generador de facturas online para Uruguay.</p>
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <span>© 2026 FacturasOnlineUY</span>
+          <nav aria-label="Enlaces del sitio" className="footer-nav">
+            <a href="/">Inicio</a>
+            <a href="/generador-de-facturas">Facturas</a>
+            <a href="/generador-de-proformas">Proformas</a>
+            <a href="#ayuda">Ayuda</a>
+            <button type="button" onClick={() => setTermsOpen(true)} className="footer-link-button">Términos</button>
+          </nav>
+        </div>
       </footer>
 
       {termsOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="modal-overlay"
           role="presentation"
           onClick={(event) => {
             if (event.target === event.currentTarget) setTermsOpen(false)
@@ -1035,21 +697,21 @@ function App() {
             aria-modal="true"
             aria-labelledby="terms-title"
             aria-describedby="terms-description"
-            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-left shadow-2xl"
+            className="terms-dialog"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
-              <h2 id="terms-title" className="text-lg font-bold text-slate-100">Términos y Condiciones</h2>
+            <div className="modal-header">
+              <h2 id="terms-title">Términos y condiciones</h2>
               <button
                 type="button"
                 ref={closeTermsButtonRef}
                 onClick={() => setTermsOpen(false)}
                 aria-label="Cerrar términos y condiciones"
-                className="text-xl leading-none text-slate-500 hover:text-slate-200 transition"
+                className="modal-close"
               >
                 ×
               </button>
             </div>
-            <div id="terms-description" className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+            <div id="terms-description" className="modal-copy">
               <p>FacturasOnlineUY es un generador de diseño en PDF. No emite comprobantes fiscales oficiales avalados por la DGI.</p>
               <p>El usuario asume la responsabilidad total sobre el uso legal y ético de los documentos generados.</p>
               <p>La administración se reserva el derecho de eliminar opiniones anónimas que contengan spam o falten al respeto.</p>

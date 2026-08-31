@@ -44,7 +44,7 @@ function staticMarkup(page) {
     .map(([question, answer]) => `<details><summary>${escapeHtml(question)}</summary><p>${escapeHtml(answer)}</p></details>`)
     .join('')
 
-  return `<header><nav aria-label="Navegación principal">${internalLinks}</nav></header><main><section id="generador" aria-labelledby="generator-heading"><h1 id="generator-heading">${escapeHtml(page.h1)}</h1><p>${escapeHtml(page.intro)}</p><a href="#generador">Crear ${escapeHtml(page.documentLabel)} en PDF</a></section><section aria-labelledby="how-heading"><h2 id="how-heading">Cómo funciona</h2><ol>${steps}</ol></section><section aria-labelledby="faq-heading"><h2 id="faq-heading">Preguntas frecuentes</h2>${faq}</section></main><footer><nav aria-label="Enlaces del sitio">${internalLinks}</nav></footer>`
+  return `<header><nav aria-label="Navegación principal">${internalLinks}</nav></header><main><section id="generador" aria-labelledby="generator-heading"><h1 id="generator-heading">${escapeHtml(page.h1)}</h1><p>${escapeHtml(page.heroIntro)}</p><a href="#generador">Crear ${escapeHtml(page.documentLabel)} en PDF</a></section><section aria-labelledby="how-heading"><h2 id="how-heading">Cómo funciona</h2><p>${escapeHtml(page.intro)}</p><ol>${steps}</ol></section><section aria-labelledby="faq-heading"><h2 id="faq-heading">Preguntas frecuentes</h2>${faq}</section></main><footer><nav aria-label="Enlaces del sitio">${internalLinks}</nav></footer>`
 }
 
 function renderPage(template, page) {
