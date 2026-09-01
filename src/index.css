@@ -78,7 +78,12 @@ a { color: inherit; }
   color: var(--text-primary);
   text-decoration: none;
 }
-.brand-mark { width: 30px; height: 30px; flex: 0 0 auto; }
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  filter: brightness(1.32) contrast(1.05);
+}
 .brand-name {
   font-size: 15px;
   font-weight: 720;
