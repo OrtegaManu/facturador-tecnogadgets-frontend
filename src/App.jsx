@@ -40,6 +40,13 @@ const INITIAL_ITEMS = [
 
 const roundMoney = (value) => Math.round((value + Number.EPSILON) * 100) / 100
 
+const MONEY_FORMATTERS = {
+  USD: new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'USD' }),
+  UYU: new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU' })
+}
+
+const formatMoney = (value, currency) => MONEY_FORMATTERS[currency].format(Number(value) || 0)
+
 function Opiniones() {
   const [comentarios, setComentarios] = useState([])
   const [texto, setTexto] = useState('')
@@ -490,7 +497,10 @@ function App() {
     <div className="app-shell">
       <header className="site-header">
         <div className="header-inner">
-          <a href="/" className="brand">FacturasOnlineUY</a>
+          <a href="/" className="brand" aria-label="FacturasOnlineUY, inicio">
+            <img src="/favicon.svg" width="30" height="30" alt="" className="brand-mark" />
+            <span className="brand-name">FacturasOnline<span>UY</span></span>
+          </a>
           <span className="header-note">Gratis · sin registro · PDF al instante</span>
         </div>
       </header>
@@ -620,7 +630,7 @@ function App() {
             <div className="field-grid four-columns">
               <div className="field">
                 <label htmlFor="documento-numero">Número</label>
-                <input id="documento-numero" className="control" type="text" name="numero" value={configFactura.numero} onChange={handleConfigChange} required />
+                <input id="documento-numero" className="control numeric-control document-number-control" type="text" name="numero" value={configFactura.numero} onChange={handleConfigChange} required />
                 <span className="field-hint">Numeración guardada en este dispositivo; no sustituye la numeración fiscal oficial.</span>
               </div>
               <div className="field">
@@ -636,7 +646,7 @@ function App() {
               </div>
               <div className="field">
                 <label htmlFor="descuento-global">Descuento global</label>
-                <input id="descuento-global" className="control" type="number" min="0" max="100" step="0.1" value={descuentoGlobal} onChange={(event) => setDescuentoGlobal(event.target.value)} inputMode="decimal" />
+                <input id="descuento-global" className="control numeric-control" type="number" min="0" max="100" step="0.1" value={descuentoGlobal} onChange={(event) => setDescuentoGlobal(event.target.value)} inputMode="decimal" />
               </div>
             </div>
           </section>
@@ -680,15 +690,15 @@ function App() {
                     <div className="item-meta-grid">
                       <div className="item-field">
                         <label htmlFor={'item-' + item.id + '-cantidad'}>Cantidad</label>
-                        <input id={'item-' + item.id + '-cantidad'} className="control" type="number" min="1" value={item.cantidad} onChange={(event) => handleItemChange(item.id, 'cantidad', event.target.value)} inputMode="numeric" />
+                        <input id={'item-' + item.id + '-cantidad'} className="control numeric-control" type="number" min="1" value={item.cantidad} onChange={(event) => handleItemChange(item.id, 'cantidad', event.target.value)} inputMode="numeric" />
                       </div>
                       <div className="item-field">
                         <label htmlFor={'item-' + item.id + '-precio'}>Precio ({symbol})</label>
-                        <input id={'item-' + item.id + '-precio'} className="control" type="number" min="0" step="0.01" value={item.precioUnitario} onChange={(event) => handleItemChange(item.id, 'precioUnitario', event.target.value)} inputMode="decimal" />
+                        <input id={'item-' + item.id + '-precio'} className="control numeric-control" type="number" min="0" step="0.01" value={item.precioUnitario} onChange={(event) => handleItemChange(item.id, 'precioUnitario', event.target.value)} inputMode="decimal" />
                       </div>
                       <div className="item-field">
                         <label htmlFor={'item-' + item.id + '-descuento'}>Descuento %</label>
-                        <input id={'item-' + item.id + '-descuento'} className="control" type="number" min="0" max="100" step="0.5" value={item.descuentoPorcentaje} onChange={(event) => handleItemChange(item.id, 'descuentoPorcentaje', event.target.value)} inputMode="decimal" />
+                        <input id={'item-' + item.id + '-descuento'} className="control numeric-control" type="number" min="0" max="100" step="0.5" value={item.descuentoPorcentaje} onChange={(event) => handleItemChange(item.id, 'descuentoPorcentaje', event.target.value)} inputMode="decimal" />
                       </div>
                       <div className="checkbox-field">
                         <label>
@@ -699,9 +709,9 @@ function App() {
                     </div>
 
                     <div className="item-total" aria-live="polite">
-                      <span>Subtotal {symbol} {(processed.subtotalLinea || 0).toFixed(2)}</span>
-                      {item.aplicaIva && <span>IVA {symbol} {(processed.ivaLinea || 0).toFixed(2)}</span>}
-                      <strong>Total {symbol} {(processed.totalLinea || 0).toFixed(2)}</strong>
+                      <span className={processed.subtotalLinea > 0 ? '' : 'money-empty'}>Subtotal {formatMoney(processed.subtotalLinea, configFactura.moneda)}</span>
+                      {item.aplicaIva && <span className={processed.ivaLinea > 0 ? '' : 'money-empty'}>IVA {formatMoney(processed.ivaLinea, configFactura.moneda)}</span>}
+                      <strong className={processed.totalLinea > 0 ? '' : 'money-empty'}>Total {formatMoney(processed.totalLinea, configFactura.moneda)}</strong>
                     </div>
                   </div>
                 )
@@ -734,21 +744,21 @@ function App() {
             </div>
           </details>
 
-          <section className="form-section" aria-labelledby="summary-heading">
+          <section className="form-section summary-section" aria-labelledby="summary-heading">
             <div className="section-header">
               <h2 id="summary-heading">Resumen</h2>
               <span className="section-kicker">{configFactura.moneda}</span>
             </div>
             <div className="totals">
-              <div className="total-row"><span>Subtotal</span><span>{symbol} {totals.rawSubtotal.toFixed(2)}</span></div>
+              <div className={`total-row ${totals.rawSubtotal > 0 ? '' : 'empty'}`}><span>Subtotal</span><span>{formatMoney(totals.rawSubtotal, configFactura.moneda)}</span></div>
               {totals.totalDescuentoLineas > 0 && (
-                <div className="total-row discount"><span>Descuentos en líneas</span><span>−{symbol} {totals.totalDescuentoLineas.toFixed(2)}</span></div>
+                <div className="total-row discount"><span>Descuentos en líneas</span><span>−{formatMoney(totals.totalDescuentoLineas, configFactura.moneda)}</span></div>
               )}
               {totals.montoDescuentoGlobal > 0 && (
-                <div className="total-row discount"><span>Descuento global ({descuentoGlobal}%)</span><span>−{symbol} {totals.montoDescuentoGlobal.toFixed(2)}</span></div>
+                <div className="total-row discount"><span>Descuento global ({descuentoGlobal}%)</span><span>−{formatMoney(totals.montoDescuentoGlobal, configFactura.moneda)}</span></div>
               )}
-              <div className="total-row"><span>IVA</span><span>{symbol} {totals.totalIva.toFixed(2)}</span></div>
-              <div className="total-row grand-total"><span>Total</span><span>{symbol} {totals.totalFinal.toFixed(2)}</span></div>
+              <div className={`total-row ${totals.totalIva > 0 ? '' : 'empty'}`}><span>IVA</span><span>{formatMoney(totals.totalIva, configFactura.moneda)}</span></div>
+              <div className={`total-row grand-total ${totals.totalFinal > 0 ? '' : 'empty'}`}><span>Total</span><span>{formatMoney(totals.totalFinal, configFactura.moneda)}</span></div>
             </div>
             <button type="submit" disabled={loading} className="primary-button">
               {loading ? 'Generando PDF…' : 'Generar PDF'}
