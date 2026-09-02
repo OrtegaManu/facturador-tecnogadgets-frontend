@@ -32,7 +32,8 @@ beforeEach(() => window.localStorage.clear())
 test('guarda, recupera y elimina solo los datos válidos del emisor', () => {
   const issuer = {
     nombre: 'Estudio Sur',
-    rut: '123456780019',
+    tipoIdentificacion: 'RUT',
+    numeroIdentificacion: '123456780019',
     direccion: 'Montevideo',
     telefono: '099000000',
     email: 'hola@example.com'
@@ -45,8 +46,50 @@ test('guarda, recupera y elimina solo los datos válidos del emisor', () => {
   assert.equal(persistence.loadIssuerData(), null)
 })
 
+test('guarda emisores con CI u otra identificación', () => {
+  for (const [tipoIdentificacion, numeroIdentificacion] of [
+    ['CI', '4.123.456-7'],
+    ['OTRO', 'EXT-ABC-123']
+  ]) {
+    const issuer = {
+      nombre: 'Profesional independiente',
+      tipoIdentificacion,
+      numeroIdentificacion,
+      direccion: 'Montevideo',
+      telefono: '',
+      email: ''
+    }
+
+    assert.equal(persistence.saveIssuerData(issuer), true)
+    assert.deepEqual(persistence.loadIssuerData(), issuer)
+    persistence.clearIssuerData()
+  }
+})
+
+test('migra la persistencia v1 interpretando el RUT anterior', () => {
+  window.localStorage.setItem('facturasonlineuy:issuer:v1', JSON.stringify({
+    version: 1,
+    data: {
+      nombre: 'Comercio legado',
+      rut: '219999990011',
+      direccion: 'Canelones',
+      telefono: '099111222',
+      email: 'legado@example.com'
+    }
+  }))
+
+  assert.deepEqual(persistence.loadIssuerData(), {
+    nombre: 'Comercio legado',
+    tipoIdentificacion: 'RUT',
+    numeroIdentificacion: '219999990011',
+    direccion: 'Canelones',
+    telefono: '099111222',
+    email: 'legado@example.com'
+  })
+})
+
 test('ignora datos locales corruptos o con esquema desconocido', () => {
-  window.localStorage.setItem('facturasonlineuy:issuer:v1', '{invalido')
+  window.localStorage.setItem('facturasonlineuy:issuer:v2', '{invalido')
   assert.equal(persistence.loadIssuerData(), null)
 })
 

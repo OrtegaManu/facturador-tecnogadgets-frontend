@@ -1,9 +1,13 @@
 export const DOCUMENT_TYPES = ['FACTURA', 'PROFORMA', 'PRESUPUESTO']
+export const ISSUER_IDENTIFICATION_TYPES = ['RUT', 'CI', 'OTRO']
 
-const ISSUER_STORAGE_KEY = 'facturasonlineuy:issuer:v1'
+const LEGACY_ISSUER_STORAGE_KEY = 'facturasonlineuy:issuer:v1'
+const ISSUER_STORAGE_KEY = 'facturasonlineuy:issuer:v2'
 const COUNTERS_STORAGE_KEY = 'facturasonlineuy:document-counters:v1'
-const STORAGE_VERSION = 1
-const ISSUER_FIELDS = ['nombre', 'rut', 'direccion', 'telefono', 'email']
+const ISSUER_STORAGE_VERSION = 2
+const COUNTERS_STORAGE_VERSION = 1
+const LEGACY_ISSUER_FIELDS = ['nombre', 'rut', 'direccion', 'telefono', 'email']
+const ISSUER_FIELDS = ['nombre', 'tipoIdentificacion', 'numeroIdentificacion', 'direccion', 'telefono', 'email']
 
 function storage() {
   try {
@@ -35,16 +39,31 @@ function writeJson(key, value) {
 
 export function loadIssuerData() {
   const stored = readJson(ISSUER_STORAGE_KEY)
-  if (stored?.version !== STORAGE_VERSION || !stored.data || typeof stored.data !== 'object') {
-    return null
+  if (stored?.version === ISSUER_STORAGE_VERSION && stored.data && typeof stored.data === 'object') {
+    const issuer = {}
+    for (const field of ISSUER_FIELDS) {
+      if (typeof stored.data[field] !== 'string') return null
+      issuer[field] = stored.data[field]
+    }
+    if (!ISSUER_IDENTIFICATION_TYPES.includes(issuer.tipoIdentificacion)) return null
+    return issuer
   }
 
-  const issuer = {}
-  for (const field of ISSUER_FIELDS) {
-    if (typeof stored.data[field] !== 'string') return null
-    issuer[field] = stored.data[field]
+  const legacy = readJson(LEGACY_ISSUER_STORAGE_KEY)
+  if (legacy?.version !== 1 || !legacy.data || typeof legacy.data !== 'object') return null
+
+  for (const field of LEGACY_ISSUER_FIELDS) {
+    if (typeof legacy.data[field] !== 'string') return null
   }
-  return issuer
+
+  return {
+    nombre: legacy.data.nombre,
+    tipoIdentificacion: 'RUT',
+    numeroIdentificacion: legacy.data.rut,
+    direccion: legacy.data.direccion,
+    telefono: legacy.data.telefono,
+    email: legacy.data.email
+  }
 }
 
 export function saveIssuerData(issuer) {
@@ -54,7 +73,10 @@ export function saveIssuerData(issuer) {
     if (typeof issuer[field] !== 'string') return false
     data[field] = issuer[field]
   }
-  return writeJson(ISSUER_STORAGE_KEY, { version: STORAGE_VERSION, data })
+  if (!ISSUER_IDENTIFICATION_TYPES.includes(data.tipoIdentificacion)) return false
+  const saved = writeJson(ISSUER_STORAGE_KEY, { version: ISSUER_STORAGE_VERSION, data })
+  if (saved) storage()?.removeItem(LEGACY_ISSUER_STORAGE_KEY)
+  return saved
 }
 
 export function clearIssuerData() {
@@ -62,6 +84,7 @@ export function clearIssuerData() {
     const target = storage()
     if (!target) return false
     target.removeItem(ISSUER_STORAGE_KEY)
+    target.removeItem(LEGACY_ISSUER_STORAGE_KEY)
     return true
   } catch {
     return false
@@ -76,7 +99,7 @@ export function formatDocumentNumber(value) {
 function readCounters() {
   const stored = readJson(COUNTERS_STORAGE_KEY)
   const counters = Object.fromEntries(DOCUMENT_TYPES.map((type) => [type, 1]))
-  if (stored?.version !== STORAGE_VERSION || !stored.next || typeof stored.next !== 'object') {
+  if (stored?.version !== COUNTERS_STORAGE_VERSION || !stored.next || typeof stored.next !== 'object') {
     return counters
   }
 
@@ -105,7 +128,7 @@ export function commitDocumentNumber(type, generatedNumber) {
   const generatedValue = trailingDigits ? Number.parseInt(trailingDigits[1], 10) : 0
   if (Number.isSafeInteger(generatedValue) && generatedValue > 0) {
     counters[type] = Math.max(counters[type], generatedValue + 1)
-    writeJson(COUNTERS_STORAGE_KEY, { version: STORAGE_VERSION, next: counters })
+    writeJson(COUNTERS_STORAGE_KEY, { version: COUNTERS_STORAGE_VERSION, next: counters })
   }
   return formatDocumentNumber(counters[type])
 }

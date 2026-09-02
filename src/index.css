@@ -347,6 +347,14 @@ a {
   outline-offset: 2px;
 }
 
+.fiscal-note {
+  max-width: 520px;
+  margin: 12px 0 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .form-section {
   position: relative;
   margin: 0;
@@ -408,6 +416,13 @@ a {
 
 .field-grid.four-columns {
   grid-template-columns: 1.12fr 1fr 0.78fr 1fr;
+}
+
+.issuer-identification {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(108px, 0.78fr) minmax(0, 1.5fr);
+  gap: 12px;
 }
 
 .field.full {
@@ -504,6 +519,130 @@ input[type="date"].control {
 textarea.control {
   min-height: 104px;
   resize: vertical;
+}
+
+.issuer-logo-field {
+  margin-top: 22px;
+  padding-top: 18px;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.logo-preview {
+  width: 92px;
+  height: 60px;
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #edf2f5;
+  color: #728292;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.logo-upload-content {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.logo-field-label {
+  display: block;
+  color: #40556b;
+  font-size: 12px;
+  font-weight: 590;
+  line-height: 1.35;
+}
+
+.logo-field-label span {
+  margin-left: 6px;
+  color: var(--text-tertiary);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.logo-upload-content > div:first-child p {
+  margin: 5px 0 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-file-action {
+  position: relative;
+  min-width: 106px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-file-action input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.logo-file-action:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.logo-file-action.disabled {
+  border-color: #dce4eb;
+  background: #f0f4f7;
+  color: #8795a4;
+  cursor: wait;
+}
+
+.logo-file-action.disabled input {
+  cursor: wait;
+}
+
+.logo-remove {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.logo-message {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.logo-message.error {
+  color: var(--error);
 }
 
 .local-preferences {
@@ -1352,6 +1491,31 @@ textarea.control {
 
   .field-grid.four-columns {
     grid-template-columns: 1fr;
+  }
+
+  .issuer-identification {
+    grid-template-columns: 1fr;
+    gap: 21px;
+  }
+
+  .issuer-logo-field {
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: start;
+    gap: 13px;
+  }
+
+  .logo-preview {
+    width: 76px;
+    height: 56px;
+  }
+
+  .logo-upload-content {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .logo-actions {
+    justify-content: flex-start;
   }
 
   .item-row {

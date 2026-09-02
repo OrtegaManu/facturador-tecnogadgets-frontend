@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/prerender-seo.mjs",
     "lint": "oxlint",
-    "test": "node --test src/utils/localPersistence.test.js",
+    "test": "node --test src/utils/localPersistence.test.js src/utils/issuerLogo.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

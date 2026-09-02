@@ -2,22 +2,37 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { getSeoPage } from './seoPages.js'
 import {
   DOCUMENT_TYPES,
+  ISSUER_IDENTIFICATION_TYPES,
   clearIssuerData,
   commitDocumentNumber,
   getDocumentNumbers,
   loadIssuerData,
   saveIssuerData
 } from './utils/localPersistence.js'
+import {
+  blobToBase64,
+  clearIssuerLogo,
+  loadIssuerLogo,
+  processIssuerLogo,
+  saveIssuerLogo
+} from './utils/issuerLogo.js'
 
 const API_URL = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '')
 const COMMENTS_URL = API_URL ? `${API_URL}/api/comentarios` : null
 
 const DEFAULT_EMISOR = {
   nombre: '',
-  rut: '',
+  tipoIdentificacion: 'RUT',
+  numeroIdentificacion: '',
   direccion: '',
   telefono: '',
   email: ''
+}
+
+const IDENTIFICATION_LABELS = {
+  RUT: 'RUT',
+  CI: 'Cédula de identidad',
+  OTRO: 'Identificación'
 }
 
 const DEFAULT_CLIENTE = {
@@ -211,6 +226,10 @@ function App() {
   const [datosTransferencia, setDatosTransferencia] = useState('')
   const [fechaVencimiento, setFechaVencimiento] = useState('')
   const [formaPago, setFormaPago] = useState('')
+  const [issuerLogo, setIssuerLogo] = useState(null)
+  const [logoProcessing, setLogoProcessing] = useState(false)
+  const [logoError, setLogoError] = useState(null)
+  const [logoPersistenceMessage, setLogoPersistenceMessage] = useState(null)
 
   // Status states
   const [loading, setLoading] = useState(false)
@@ -219,6 +238,7 @@ function App() {
   const [termsOpen, setTermsOpen] = useState(false)
   const previousFocusRef = useRef(null)
   const closeTermsButtonRef = useRef(null)
+  const logoInputRef = useRef(null)
   const documentLabel = {
     FACTURA: 'factura',
     PROFORMA: 'proforma',
@@ -238,6 +258,24 @@ function App() {
       setHasSavedIssuer(saveIssuerData(emisor))
     }
   }, [emisor, rememberIssuer])
+
+  useEffect(() => {
+    if (!initialIssuer) return undefined
+    let active = true
+
+    loadIssuerLogo().then((savedLogo) => {
+      if (!active || !savedLogo) return
+      setIssuerLogo({ ...savedLogo, previewUrl: URL.createObjectURL(savedLogo.blob) })
+    })
+
+    return () => {
+      active = false
+    }
+  }, [initialIssuer])
+
+  useEffect(() => () => {
+    if (issuerLogo?.previewUrl) URL.revokeObjectURL(issuerLogo.previewUrl)
+  }, [issuerLogo?.previewUrl])
 
   useEffect(() => {
     if (!termsOpen) return undefined
@@ -297,16 +335,62 @@ function App() {
     setRememberIssuer(shouldRemember)
     if (shouldRemember) {
       setHasSavedIssuer(saveIssuerData(emisor))
+      if (issuerLogo) {
+        saveIssuerLogo(issuerLogo).then((saved) => {
+          setLogoPersistenceMessage(saved ? null : 'El logo se usará en esta sesión, pero no pudo recordarse en este dispositivo.')
+        })
+      }
     } else {
       clearIssuerData()
+      clearIssuerLogo()
       setHasSavedIssuer(false)
+      setLogoPersistenceMessage(null)
     }
   }
 
   const handleClearSavedIssuer = () => {
     clearIssuerData()
+    clearIssuerLogo()
     setRememberIssuer(false)
     setHasSavedIssuer(false)
+    setLogoPersistenceMessage(null)
+  }
+
+  const handleLogoFileChange = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setLogoProcessing(true)
+    setLogoError(null)
+    setLogoPersistenceMessage(null)
+    try {
+      const processedLogo = await processIssuerLogo(file)
+      const nextLogo = {
+        ...processedLogo,
+        previewUrl: URL.createObjectURL(processedLogo.blob)
+      }
+      setIssuerLogo(nextLogo)
+
+      if (rememberIssuer) {
+        const saved = await saveIssuerLogo(processedLogo)
+        if (!saved) {
+          setLogoPersistenceMessage('El logo se usará en esta sesión, pero no pudo recordarse en este dispositivo.')
+        }
+      }
+    } catch (error) {
+      setLogoError(error.message || 'No se pudo procesar el logo seleccionado.')
+    } finally {
+      setLogoProcessing(false)
+    }
+  }
+
+  const handleRemoveLogo = () => {
+    setIssuerLogo(null)
+    setLogoError(null)
+    setLogoPersistenceMessage(null)
+    clearIssuerLogo()
+    if (logoInputRef.current) logoInputRef.current.value = ''
   }
 
   // Items Handlers
@@ -406,47 +490,59 @@ function App() {
 
     const submittedType = configFactura.tipoDocumento
     const submittedNumber = configFactura.numero
-    const payload = {
-      emisor: {
-        ...emisor,
-        nombreComercial: emisor.nombre
-      },
-      cliente: {
-        ...cliente,
-        documentoIdentidad: cliente.documento
-      },
-      factura: {
-        // Los nombres deben coincidir con DetallesFactura.java.
-        numeroFactura: configFactura.numero,
-        fechaEmision: configFactura.fecha,
-        moneda: configFactura.moneda,
-        tipoDocumento: configFactura.tipoDocumento,
-        fechaVencimiento: fechaVencimiento || null,
-        formaPago: formaPago.trim() || null,
-        observaciones: condicionesComerciales.trim() || null,
-        descuentoGlobalPorcentaje: Number(descuentoGlobal) || 0,
-        subtotal: totals.subtotalFinal,
-        descuentoTotal: totals.totalDescuentoLineas + totals.montoDescuentoGlobal,
-        ivaTotal: totals.totalIva,
-        total: totals.totalFinal
-      },
-      items: totals.processedItems.map((it) => ({
-        descripcion: it.descripcion,
-        cantidad: Number(it.cantidad),
-        precioUnitario: Number(it.precioUnitario),
-        descuentoPorcentaje: Number(it.descuentoPorcentaje),
-        aplicaIva: Boolean(it.aplicaIva),
-        subtotal: it.subtotalLinea,
-        iva: it.ivaLinea,
-        total: it.totalLinea
-      })),
-      condicionesComerciales,
-      datosTransferencia
-    }
 
     try {
       if (!API_URL) {
         throw new Error('Falta configurar la variable de entorno VITE_API_URL.')
+      }
+
+      const numeroIdentificacion = emisor.numeroIdentificacion.trim()
+      const logo = issuerLogo
+        ? {
+            contentType: issuerLogo.contentType,
+            data: await blobToBase64(issuerLogo.blob)
+          }
+        : null
+      const payload = {
+        emisor: {
+          ...emisor,
+          nombreComercial: emisor.nombre,
+          rut: emisor.tipoIdentificacion === 'RUT' ? numeroIdentificacion : '',
+          tipoIdentificacion: emisor.tipoIdentificacion,
+          numeroIdentificacion,
+          logo
+        },
+        cliente: {
+          ...cliente,
+          documentoIdentidad: cliente.documento
+        },
+        factura: {
+          // Los nombres deben coincidir con DetallesFactura.java.
+          numeroFactura: configFactura.numero,
+          fechaEmision: configFactura.fecha,
+          moneda: configFactura.moneda,
+          tipoDocumento: configFactura.tipoDocumento,
+          fechaVencimiento: fechaVencimiento || null,
+          formaPago: formaPago.trim() || null,
+          observaciones: condicionesComerciales.trim() || null,
+          descuentoGlobalPorcentaje: Number(descuentoGlobal) || 0,
+          subtotal: totals.subtotalFinal,
+          descuentoTotal: totals.totalDescuentoLineas + totals.montoDescuentoGlobal,
+          ivaTotal: totals.totalIva,
+          total: totals.totalFinal
+        },
+        items: totals.processedItems.map((it) => ({
+          descripcion: it.descripcion,
+          cantidad: Number(it.cantidad),
+          precioUnitario: Number(it.precioUnitario),
+          descuentoPorcentaje: Number(it.descuentoPorcentaje),
+          aplicaIva: Boolean(it.aplicaIva),
+          subtotal: it.subtotalLinea,
+          iva: it.ivaLinea,
+          total: it.totalLinea
+        })),
+        condicionesComerciales,
+        datosTransferencia
       }
 
       const response = await fetch(`${API_URL}/api/generar-factura`, {
@@ -563,6 +659,9 @@ function App() {
                 <span>Presupuesto</span>
               </label>
             </div>
+            {configFactura.tipoDocumento === 'FACTURA' && (
+              <p className="fiscal-note">Este PDF no sustituye un comprobante fiscal electrónico emitido ante DGI.</p>
+            )}
           </fieldset>
 
           <section className="form-section" aria-labelledby="emisor-heading">
@@ -574,9 +673,28 @@ function App() {
                 <label htmlFor="emisor-nombre">Nombre / razón social</label>
                 <input id="emisor-nombre" className="control" type="text" name="nombre" value={emisor.nombre} onChange={handleEmisorChange} required autoComplete="organization" />
               </div>
-              <div className="field">
-                <label htmlFor="emisor-rut">RUT</label>
-                <input id="emisor-rut" className="control" type="text" name="rut" value={emisor.rut} onChange={handleEmisorChange} required inputMode="numeric" />
+              <div className="issuer-identification">
+                <div className="field">
+                  <label htmlFor="emisor-identification-type">Tipo de identificación</label>
+                  <select id="emisor-identification-type" className="control" name="tipoIdentificacion" value={emisor.tipoIdentificacion} onChange={handleEmisorChange}>
+                    {ISSUER_IDENTIFICATION_TYPES.map((type) => <option key={type} value={type}>{type === 'OTRO' ? 'Otro' : type}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="emisor-identification-number">{IDENTIFICATION_LABELS[emisor.tipoIdentificacion]}</label>
+                  <input
+                    id="emisor-identification-number"
+                    className="control"
+                    type="text"
+                    name="numeroIdentificacion"
+                    value={emisor.numeroIdentificacion}
+                    onChange={handleEmisorChange}
+                    required
+                    maxLength={64}
+                    inputMode={emisor.tipoIdentificacion === 'RUT' ? 'numeric' : 'text'}
+                    autoComplete="off"
+                  />
+                </div>
               </div>
               <div className="field full">
                 <label htmlFor="emisor-direccion">Dirección</label>
@@ -589,6 +707,39 @@ function App() {
               <div className="field">
                 <label htmlFor="emisor-email">Email</label>
                 <input id="emisor-email" className="control" type="email" name="email" value={emisor.email} onChange={handleEmisorChange} autoComplete="email" />
+              </div>
+            </div>
+            <div className="issuer-logo-field">
+              <div className="logo-preview" aria-hidden={!issuerLogo}>
+                {issuerLogo ? (
+                  <img src={issuerLogo.previewUrl} alt="Vista previa del logo del emisor" />
+                ) : (
+                  <span>Logo</span>
+                )}
+              </div>
+              <div className="logo-upload-content">
+                <div>
+                  <span className="logo-field-label">Logo del documento <span>Opcional</span></span>
+                  <p id="issuer-logo-help">PNG, JPG o WebP. Máximo 5 MB; se optimiza antes de enviarlo.</p>
+                </div>
+                <div className="logo-actions">
+                  <label className={`secondary-button logo-file-action ${logoProcessing ? 'disabled' : ''}`}>
+                    <span>{logoProcessing ? 'Procesando…' : issuerLogo ? 'Cambiar' : 'Agregar logo'}</span>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleLogoFileChange}
+                      disabled={logoProcessing}
+                      aria-describedby={`issuer-logo-help${logoError ? ' issuer-logo-error' : ''}`}
+                    />
+                  </label>
+                  {issuerLogo && (
+                    <button type="button" className="text-button logo-remove" onClick={handleRemoveLogo}>Quitar</button>
+                  )}
+                </div>
+                {logoError && <p id="issuer-logo-error" role="alert" className="logo-message error">{logoError}</p>}
+                {logoPersistenceMessage && <p role="status" className="logo-message">{logoPersistenceMessage}</p>}
               </div>
             </div>
             <div className="local-preferences">
