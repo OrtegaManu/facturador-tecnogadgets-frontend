@@ -421,7 +421,7 @@ a {
 .issuer-identification {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(108px, 0.78fr) minmax(0, 1.5fr);
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 1.25fr);
   gap: 12px;
 }
 
