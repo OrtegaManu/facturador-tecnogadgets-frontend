@@ -501,7 +501,7 @@ function App() {
             <img src="/brand-mark.png" width="34" height="34" alt="" className="brand-mark" />
             <span className="brand-name">FacturasOnline<span>UY</span></span>
           </a>
-          <span className="header-note">Gratis · sin registro · PDF al instante</span>
+          <span className="header-note">Facturas, proformas y presupuestos PDF</span>
         </div>
       </header>
 
